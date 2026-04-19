@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -7,17 +7,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0e1a;
-    --surface: #111827;
-    --surface2: #1a2235;
-    --border: #1e2d45;
-    --accent: #60a5fa;      /* 경우 블루 — 메인 */
-    --accent2: #3b82f6;     /* 경우 딥블루 */
-    --accent3: #fbbf24;     /* 새롬 골드 */
-    --gold: #f59e0b;        /* 새롬 앰버 */
-    --text: #f1f5f9;
-    --muted: #64748b;
-    --danger: #f87171;
+    --bg: #0d0b08;
+    --surface: #171310;
+    --surface2: #1f1a13;
+    --border: #2e231a;
+    --accent: #9CC6DB;      /* 경우 블루 — 메인 */
+    --accent2: #6aaec9;     /* 경우 딥블루 */
+    --accent3: #DDBA7D;     /* 새롬 골드 */
+    --gold: #c9a05e;        /* 새롬 앰버 */
+    --text: #FCF6D9;
+    --muted: #7a7060;
+    --danger: #CF4B00;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -188,7 +188,7 @@
   .wealth-change {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 0.78rem; color: var(--accent); margin-top: 4px;
-    background: rgba(96,165,250,0.1); padding: 3px 10px; border-radius: 20px;
+    background: rgba(156,198,219,0.1); padding: 3px 10px; border-radius: 20px;
   }
 
   /* CHART */
@@ -219,8 +219,8 @@
 
   /* INTEREST TICKER */
   .interest-ticker {
-    background: linear-gradient(135deg, rgba(96,165,250,0.06), rgba(59,130,246,0.06));
-    border: 1px solid rgba(96,165,250,0.3);
+    background: linear-gradient(135deg, rgba(156,198,219,0.06), rgba(106,174,201,0.06));
+    border: 1px solid rgba(156,198,219,0.3);
     border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -256,7 +256,7 @@
   }
   .account-card .rate-badge {
     position: absolute; top: 12px; right: 12px;
-    background: rgba(251,191,36,0.15); color: var(--gold);
+    background: rgba(221,186,125,0.15); color: var(--gold);
     font-size: 0.65rem; padding: 2px 7px; border-radius: 8px;
   }
   .account-card.add-card {
@@ -356,12 +356,12 @@
     transition: all 0.25s; background: transparent; color: var(--muted);
   }
   .mode-btn.income.active {
-    background: linear-gradient(135deg, var(--accent), #3b82f6);
-    color: var(--bg); box-shadow: 0 4px 16px rgba(96,165,250,0.3);
+    background: linear-gradient(135deg, var(--accent), #6aaec9);
+    color: var(--bg); box-shadow: 0 4px 16px rgba(156,198,219,0.3);
   }
   .mode-btn.expense.active {
-    background: linear-gradient(135deg, var(--danger), #fbbf24);
-    color: var(--bg); box-shadow: 0 4px 16px rgba(248,113,113,0.3);
+    background: linear-gradient(135deg, var(--danger), #DDBA7D);
+    color: var(--bg); box-shadow: 0 4px 16px rgba(207,75,0,0.3);
   }
 
   .entry-hero {
@@ -373,7 +373,7 @@
   }
   .entry-title.income { background: linear-gradient(135deg, var(--accent), var(--accent2));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .entry-title.expense { background: linear-gradient(135deg, var(--danger), #fbbf24);
+  .entry-title.expense { background: linear-gradient(135deg, var(--danger), #DDBA7D);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .entry-sub { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
 
@@ -382,7 +382,7 @@
     border-radius: 16px; padding: 24px; margin-bottom: 16px;
     transition: border-color 0.3s;
   }
-  .income-form.expense-mode { border-color: rgba(248,113,113,0.3); }
+  .income-form.expense-mode { border-color: rgba(207,75,0,0.3); }
 
   .form-row { margin-bottom: 16px; }
   .form-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
@@ -407,13 +407,13 @@
     cursor: pointer; transition: all 0.3s; margin-top: 8px;
   }
   .submit-btn.income { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
-  .submit-btn.expense { background: linear-gradient(135deg, var(--danger), #fbbf24); }
+  .submit-btn.expense { background: linear-gradient(135deg, var(--danger), #DDBA7D); }
   .submit-btn:hover { opacity: 0.88; }
 
   /* weekly auto deduction preview */
   .auto-deduct-box {
-    background: linear-gradient(135deg, rgba(248,113,113,0.06), rgba(251,191,36,0.06));
-    border: 1px solid rgba(248,113,113,0.2);
+    background: linear-gradient(135deg, rgba(207,75,0,0.06), rgba(221,186,125,0.06));
+    border: 1px solid rgba(207,75,0,0.2);
     border-radius: 14px; padding: 16px; margin-top: 16px;
   }
   .auto-deduct-title {
@@ -430,8 +430,8 @@
   .auto-deduct-badge {
     font-size: 0.65rem; padding: 2px 8px; border-radius: 8px; white-space: nowrap;
   }
-  .badge-auto { background: rgba(248,113,113,0.15); color: var(--danger); }
-  .badge-manual { background: rgba(96,165,250,0.15); color: var(--accent); }
+  .badge-auto { background: rgba(207,75,0,0.15); color: var(--danger); }
+  .badge-manual { background: rgba(156,198,219,0.15); color: var(--accent); }
   .auto-deduct-chk {
     width: 16px; height: 16px; accent-color: var(--danger); cursor: pointer;
   }
@@ -443,7 +443,7 @@
   .deduct-summary-amt { font-family: 'Black Han Sans', sans-serif; font-size: 1rem; color: var(--danger); }
   .confirm-deduct-btn {
     width: 100%; margin-top: 12px; padding: 12px;
-    background: linear-gradient(135deg, var(--danger), #fbbf24);
+    background: linear-gradient(135deg, var(--danger), #DDBA7D);
     border: none; border-radius: 10px; color: var(--bg);
     font-family: 'Black Han Sans', sans-serif; font-size: 0.95rem; cursor: pointer;
   }
@@ -457,8 +457,8 @@
 
   /* SMS AUTO COLLECT */
   .sms-banner {
-    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(96,165,250,0.08));
-    border: 1px solid rgba(59,130,246,0.25);
+    background: linear-gradient(135deg, rgba(106,174,201,0.08), rgba(156,198,219,0.08));
+    border: 1px solid rgba(106,174,201,0.25);
     border-radius: 14px; padding: 14px 18px; margin-bottom: 12px;
     display: flex; align-items: center; gap: 12px;
   }
@@ -541,16 +541,16 @@
     position: relative; transition: all 0.2s;
   }
   .player-status-card.kyungwoo {
-    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(56,189,248,0.04));
-    border-color: rgba(59,130,246,0.25);
+    background: linear-gradient(135deg, rgba(106,174,201,0.08), rgba(56,189,248,0.04));
+    border-color: rgba(106,174,201,0.25);
   }
   .player-status-card.saerom {
-    background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(251,191,36,0.04));
-    border-color: rgba(251,191,36,0.25);
+    background: linear-gradient(135deg, rgba(221,186,125,0.08), rgba(221,186,125,0.04));
+    border-color: rgba(221,186,125,0.25);
   }
   .player-status-card.active-turn {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 0 1px rgba(96,165,250,0.3);
+    box-shadow: 0 0 0 1px rgba(156,198,219,0.3);
   }
   .player-status-card.done-turn {
     opacity: 0.65;
@@ -564,8 +564,8 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 0.8rem; font-family: 'Black Han Sans', sans-serif;
   }
-  .ps-avatar.k { background: rgba(59,130,246,0.25); color: var(--accent2); }
-  .ps-avatar.s { background: rgba(251,191,36,0.25); color: var(--gold); }
+  .ps-avatar.k { background: rgba(106,174,201,0.25); color: var(--accent2); }
+  .ps-avatar.s { background: rgba(221,186,125,0.25); color: var(--gold); }
   .ps-progress-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 5px; }
   .ps-bar-wrap { background: var(--surface2); border-radius: 6px; height: 5px; }
   .ps-bar {
@@ -582,7 +582,7 @@
   }
   .dot-waiting { background: var(--muted); }
   .dot-active { background: var(--accent); animation: blink 1.2s infinite; }
-  .dot-done { background: #60a5fa; }
+  .dot-done { background: #9CC6DB; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .player-btn {
@@ -592,20 +592,20 @@
     justify-content: center; gap: 10px;
   }
   .player-btn.kyungwoo {
-    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(74,222,128,0.05));
-    border-color: rgba(59,130,246,0.4); color: var(--accent2);
+    background: linear-gradient(135deg, rgba(106,174,201,0.1), rgba(74,222,128,0.05));
+    border-color: rgba(106,174,201,0.4); color: var(--accent2);
   }
   .player-btn.kyungwoo:hover { background: rgba(56,189,248,0.18); transform: translateY(-2px); }
   .player-btn.saerom {
-    background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.05));
-    border-color: rgba(251,191,36,0.4); color: var(--gold);
+    background: linear-gradient(135deg, rgba(221,186,125,0.1), rgba(221,186,125,0.05));
+    border-color: rgba(221,186,125,0.4); color: var(--gold);
   }
-  .player-btn.saerom:hover { background: rgba(251,191,36,0.18); transform: translateY(-2px); }
+  .player-btn.saerom:hover { background: rgba(221,186,125,0.18); transform: translateY(-2px); }
   .player-btn.done-btn { opacity: 0.45; cursor: default; }
   .player-btn.done-btn:hover { transform: none; }
   .player-btn .check-badge {
     font-size: 0.75rem; padding: 2px 8px; border-radius: 10px;
-    background: rgba(96,165,250,0.2); color: var(--accent);
+    background: rgba(156,198,219,0.2); color: var(--accent);
   }
 
   /* QA with player color */
@@ -617,8 +617,8 @@
     display: flex; align-items: center; justify-content: center;
     font-family: 'Black Han Sans', sans-serif; font-size: 1rem;
   }
-  .wph-avatar.k { background: rgba(59,130,246,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
-  .wph-avatar.s { background: rgba(251,191,36,0.2); color: var(--gold); border: 2px solid var(--gold); }
+  .wph-avatar.k { background: rgba(106,174,201,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
+  .wph-avatar.s { background: rgba(221,186,125,0.2); color: var(--gold); border: 2px solid var(--gold); }
   .wph-info-name { font-family: 'Black Han Sans', sans-serif; font-size: 1rem; }
   .wph-info-sub { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
   .back-to-select {
@@ -646,16 +646,16 @@
     border-radius: 16px; padding: 18px 14px; text-align: center;
   }
   .result-player-card.k {
-    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(56,189,248,0.04));
-    border: 2px solid rgba(59,130,246,0.3);
+    background: linear-gradient(135deg, rgba(106,174,201,0.1), rgba(56,189,248,0.04));
+    border: 2px solid rgba(106,174,201,0.3);
   }
   .result-player-card.s {
-    background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.04));
-    border: 2px solid rgba(251,191,36,0.3);
+    background: linear-gradient(135deg, rgba(221,186,125,0.1), rgba(221,186,125,0.04));
+    border: 2px solid rgba(221,186,125,0.3);
   }
   .result-player-card.winner {
     transform: scale(1.03);
-    box-shadow: 0 4px 24px rgba(96,165,250,0.15);
+    box-shadow: 0 4px 24px rgba(156,198,219,0.15);
   }
   .result-player-card.winner.k { border-color: var(--accent2); }
   .result-player-card.winner.s { border-color: var(--gold); }
@@ -703,8 +703,8 @@
   }
 
   /* weekly qa-card player tint */
-  .qa-card.player-k { border-color: rgba(59,130,246,0.3); }
-  .qa-card.player-s { border-color: rgba(251,191,36,0.3); }
+  .qa-card.player-k { border-color: rgba(106,174,201,0.3); }
+  .qa-card.player-s { border-color: rgba(221,186,125,0.3); }
   .qa-confirm.k { background: linear-gradient(135deg, var(--accent2), var(--accent)); }
   .qa-confirm.s { background: linear-gradient(135deg, var(--gold), var(--accent3)); }
 
@@ -722,12 +722,12 @@
       <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
         <defs>
           <linearGradient id="chartGrad" x1="0" y1="0" x2="32" y2="0">
-            <stop offset="0%" stop-color="#60a5fa"/>
-            <stop offset="100%" stop-color="#3b82f6"/>
+            <stop offset="0%" stop-color="#9CC6DB"/>
+            <stop offset="100%" stop-color="#6aaec9"/>
           </linearGradient>
           <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#9CC6DB" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#9CC6DB" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <!-- fill area under chart line -->
@@ -738,15 +738,15 @@
                   stroke="url(#chartGrad)" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <!-- dots -->
-        <circle cx="3"  cy="21"   r="1.6" fill="#60a5fa"/>
-        <circle cx="13" cy="18.5" r="1.6" fill="#60a5fa" opacity="0.7"/>
-        <circle cx="19" cy="13"   r="1.6" fill="#3b82f6" opacity="0.8"/>
-        <circle cx="29" cy="6"    r="2"   fill="#3b82f6"/>
+        <circle cx="3"  cy="21"   r="1.6" fill="#9CC6DB"/>
+        <circle cx="13" cy="18.5" r="1.6" fill="#9CC6DB" opacity="0.7"/>
+        <circle cx="19" cy="13"   r="1.6" fill="#6aaec9" opacity="0.8"/>
+        <circle cx="29" cy="6"    r="2"   fill="#6aaec9"/>
         <!-- upward arrow tip -->
         <polyline points="26,4.5 29,1.5 32,4.5"
-                  stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  stroke="#6aaec9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <!-- x-axis baseline -->
-        <line x1="2" y1="26" x2="30" y2="26" stroke="#1e2d45" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="2" y1="26" x2="30" y2="26" stroke="#2e231a" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
     </div>
     <div>
@@ -771,25 +771,25 @@
       <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="72">
         <defs>
           <linearGradient id="bpGrad" x1="0" y1="0" x2="72" y2="0">
-            <stop offset="0%" stop-color="#60a5fa"/>
-            <stop offset="100%" stop-color="#3b82f6"/>
+            <stop offset="0%" stop-color="#9CC6DB"/>
+            <stop offset="100%" stop-color="#6aaec9"/>
           </linearGradient>
           <linearGradient id="bpFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.2"/>
-            <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#9CC6DB" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#9CC6DB" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <path d="M6 54 L6 48 L18 38 L30 42 L43 30 L58 18 L66 13 L66 54 Z" fill="url(#bpFill)"/>
         <polyline points="6,48 18,38 30,42 43,30 58,18 66,13"
                   stroke="url(#bpGrad)" stroke-width="4.5"
                   stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="6"  cy="48" r="3.5" fill="#60a5fa"/>
-        <circle cx="30" cy="42" r="3.5" fill="#60a5fa" opacity="0.7"/>
-        <circle cx="43" cy="30" r="3.5" fill="#3b82f6" opacity="0.8"/>
-        <circle cx="66" cy="13" r="4.5" fill="#3b82f6"/>
+        <circle cx="6"  cy="48" r="3.5" fill="#9CC6DB"/>
+        <circle cx="30" cy="42" r="3.5" fill="#9CC6DB" opacity="0.7"/>
+        <circle cx="43" cy="30" r="3.5" fill="#6aaec9" opacity="0.8"/>
+        <circle cx="66" cy="13" r="4.5" fill="#6aaec9"/>
         <polyline points="59,8 66,1 73,8"
-                  stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <line x1="4" y1="60" x2="68" y2="60" stroke="#1e2d45" stroke-width="2.2" stroke-linecap="round"/>
+                  stroke="#6aaec9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <line x1="4" y1="60" x2="68" y2="60" stroke="#2e231a" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
     </div>
     <div class="bp-title">벌쓰</div>
@@ -980,15 +980,15 @@
   <svg viewBox="0 0 72 72" fill="none" width="64" height="64" style="margin-bottom:16px">
     <defs>
       <linearGradient id="obGrad" x1="0" y1="0" x2="72" y2="0">
-        <stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#fbbf24"/>
+        <stop offset="0%" stop-color="#9CC6DB"/><stop offset="100%" stop-color="#DDBA7D"/>
       </linearGradient>
     </defs>
-    <path d="M6 54 L6 48 L18 38 L30 42 L43 30 L58 18 L66 13 L66 54 Z" fill="rgba(96,165,250,0.15)"/>
+    <path d="M6 54 L6 48 L18 38 L30 42 L43 30 L58 18 L66 13 L66 54 Z" fill="rgba(156,198,219,0.15)"/>
     <polyline points="6,48 18,38 30,42 43,30 58,18 66,13" stroke="url(#obGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="66" cy="13" r="4.5" fill="#fbbf24"/>
-    <line x1="4" y1="60" x2="68" y2="60" stroke="#1e2d45" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="66" cy="13" r="4.5" fill="#DDBA7D"/>
+    <line x1="4" y1="60" x2="68" y2="60" stroke="#2e231a" stroke-width="2.2" stroke-linecap="round"/>
   </svg>
-  <div style="font-family:'Black Han Sans',sans-serif;font-size:2.2rem;background:linear-gradient(135deg,#60a5fa,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">벌쓰</div>
+  <div style="font-family:'Black Han Sans',sans-serif;font-size:2.2rem;background:linear-gradient(135deg,#9CC6DB,#DDBA7D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">벌쓰</div>
   <div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.12em;margin-bottom:32px">VERSE BY 경우, 새롬</div>
 
   <!-- STEP 1: 이름 선택 -->
@@ -996,8 +996,8 @@
     <div style="font-size:1rem;font-family:'Black Han Sans',sans-serif;margin-bottom:6px">나는 누구?</div>
     <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px">내 이름을 선택해요</div>
     <div style="display:flex;gap:12px">
-      <button onclick="selectPlayer('경우')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(96,165,250,0.4);background:rgba(96,165,250,0.08);color:#60a5fa;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">🧑 경우</button>
-      <button onclick="selectPlayer('새롬')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.08);color:#fbbf24;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">👩 새롬</button>
+      <button onclick="selectPlayer('경우')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(156,198,219,0.4);background:rgba(156,198,219,0.08);color:#9CC6DB;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">🧑 경우</button>
+      <button onclick="selectPlayer('새롬')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(221,186,125,0.4);background:rgba(221,186,125,0.08);color:#DDBA7D;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">👩 새롬</button>
     </div>
   </div>
 
@@ -1008,10 +1008,10 @@
 
     <!-- 첫 접속 옵션 -->
     <div id="ob-mode-new">
-      <button onclick="createHousehold()" style="width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:1rem;cursor:pointer;margin-bottom:10px">✨ 새 가계 만들기</button>
+      <button onclick="createHousehold()" style="width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#6aaec9,#9CC6DB);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:1rem;cursor:pointer;margin-bottom:10px">✨ 새 가계 만들기</button>
       <div style="display:flex;gap:8px">
         <input id="ob-invite-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
-        <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.1);color:#fbbf24;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">참여</button>
+        <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(221,186,125,0.4);background:rgba(221,186,125,0.1);color:#DDBA7D;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">참여</button>
       </div>
       <button onclick="showReconnectMode()" style="width:100%;margin-top:16px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">↩ 이미 가계가 있어요 (기기 재접속)</button>
     </div>
@@ -1020,7 +1020,7 @@
     <div id="ob-mode-reconnect" style="display:none">
       <div style="display:flex;gap:8px">
         <input id="ob-reconnect-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
-        <button onclick="reconnectHousehold()" style="padding:12px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">재접속</button>
+        <button onclick="reconnectHousehold()" style="padding:12px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#6aaec9,#9CC6DB);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">재접속</button>
       </div>
       <button onclick="showNewMode()" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">← 돌아가기</button>
     </div>
@@ -1484,16 +1484,16 @@ function renderChart(period = '1M') {
   const ctx = document.getElementById('wealthChart').getContext('2d');
   if (chartInstance) chartInstance.destroy();
   const grad = ctx.createLinearGradient(0, 0, 0, 180);
-  grad.addColorStop(0, 'rgba(96,165,250,0.25)');
-  grad.addColorStop(1, 'rgba(96,165,250,0)');
+  grad.addColorStop(0, 'rgba(156,198,219,0.25)');
+  grad.addColorStop(1, 'rgba(156,198,219,0)');
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: data.map(d => d.date),
       datasets: [{
         data: data.map(d => d.val),
-        borderColor: '#60a5fa', borderWidth: 2.5,
-        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#60a5fa',
+        borderColor: '#9CC6DB', borderWidth: 2.5,
+        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#9CC6DB',
         fill: true, backgroundColor: grad, tension: 0.4,
       }]
     },
@@ -1503,17 +1503,17 @@ function renderChart(period = '1M') {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#111827', borderColor: '#1e2d45', borderWidth: 1,
-          titleColor: '#94a3b8', bodyColor: '#60a5fa',
+          backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
+          titleColor: '#9b9080', bodyColor: '#9CC6DB',
           bodyFont: { family: 'Black Han Sans', size: 14 },
           callbacks: { label: ctx => fmt(ctx.parsed.y) }
         }
       },
       scales: {
-        x: { grid: { color: 'rgba(30,45,69,0.6)' }, ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 8 }, border: { display: false } },
+        x: { grid: { color: 'rgba(30,45,69,0.6)' }, ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 8 }, border: { display: false } },
         y: {
           grid: { color: 'rgba(30,45,69,0.6)' },
-          ticks: { color: '#64748b', font: { size: 10 },
+          ticks: { color: '#7a7060', font: { size: 10 },
             callback: v => v >= 1e8 ? (v/1e8).toFixed(0)+'억' : v >= 1e4 ? (v/1e4).toFixed(0)+'만' : v
           },
           border: { display: false }
@@ -1577,7 +1577,7 @@ function renderTxList(id) {
     <div class="tx-item">
       <div class="tx-emoji">${t.emoji}</div>
       <div class="tx-info">
-        <div class="tx-name">${t.name}${t.autoDeducted ? ' <span style="font-size:0.65rem;color:var(--muted);background:rgba(248,113,113,0.12);padding:1px 6px;border-radius:6px;">자동감지</span>' : ''}</div>
+        <div class="tx-name">${t.name}${t.autoDeducted ? ' <span style="font-size:0.65rem;color:var(--muted);background:rgba(207,75,0,0.12);padding:1px 6px;border-radius:6px;">자동감지</span>' : ''}</div>
         <div class="tx-meta">${t.meta}</div>
       </div>
       <div class="tx-amount ${t.type}">${t.type === 'out' ? '-' : '+'}${fmt(Math.abs(t.amount))}</div>
@@ -2110,7 +2110,7 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
           <input id="modalExpAmt" type="number" placeholder="금액 (원)"
             style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;outline:none;" />
           <button onclick="addModalExpense(${accountIdx}, ${newBalance})"
-            style="background:linear-gradient(135deg,var(--danger),#fbbf24);border:none;border-radius:8px;padding:8px 16px;color:var(--bg);font-family:'Black Han Sans',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+            style="background:linear-gradient(135deg,var(--danger),#DDBA7D);border:none;border-radius:8px;padding:8px 16px;color:var(--bg);font-family:'Black Han Sans',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
             추가
           </button>
         </div>
