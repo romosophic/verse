@@ -1004,12 +1004,27 @@
   <!-- STEP 2: 가구 연결 -->
   <div id="ob-step2" style="width:100%;max-width:360px;display:none">
     <div style="font-size:1rem;font-family:'Black Han Sans',sans-serif;margin-bottom:6px" id="ob2-title">우리 가계 연결</div>
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px">처음이면 새로 만들고, 상대방이 이미 만들었다면 코드로 참여해요</div>
-    <button onclick="createHousehold()" style="width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:1rem;cursor:pointer;margin-bottom:10px">✨ 새 가계 만들기</button>
-    <div style="display:flex;gap:8px">
-      <input id="ob-invite-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
-      <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.1);color:#fbbf24;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">참여</button>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px" id="ob2-desc">처음이면 새로 만들고, 상대방이 이미 만들었다면 코드로 참여해요</div>
+
+    <!-- 첫 접속 옵션 -->
+    <div id="ob-mode-new">
+      <button onclick="createHousehold()" style="width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:1rem;cursor:pointer;margin-bottom:10px">✨ 새 가계 만들기</button>
+      <div style="display:flex;gap:8px">
+        <input id="ob-invite-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
+        <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.1);color:#fbbf24;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">참여</button>
+      </div>
+      <button onclick="showReconnectMode()" style="width:100%;margin-top:16px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">↩ 이미 가계가 있어요 (기기 재접속)</button>
     </div>
+
+    <!-- 재접속 옵션 -->
+    <div id="ob-mode-reconnect" style="display:none">
+      <div style="display:flex;gap:8px">
+        <input id="ob-reconnect-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
+        <button onclick="reconnectHousehold()" style="padding:12px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">재접속</button>
+      </div>
+      <button onclick="showNewMode()" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">← 돌아가기</button>
+    </div>
+
     <div id="ob-error" style="font-size:0.75rem;color:var(--danger);margin-top:8px;min-height:18px"></div>
   </div>
 
@@ -1138,6 +1153,50 @@ async function joinHousehold() {
         await sb.from('accounts').insert({ household_id: hh.id, owner: '새롬', bank: 'NH농협', name: '급여통장', balance: 0, prev_balance: 0, rate: 0.3 });
       }
     }
+
+    session.householdId = hh.id;
+    session.inviteCode = hh.invite_code;
+    localStorage.setItem('bulseu_session', JSON.stringify(session));
+    await bootApp();
+  } catch(e) {
+    showObError(e.message);
+  }
+}
+
+function showReconnectMode() {
+  document.getElementById('ob-mode-new').style.display = 'none';
+  document.getElementById('ob-mode-reconnect').style.display = 'block';
+  document.getElementById('ob2-desc').textContent = '이 기기에서 처음 접속하는 경우, 초대코드로 기존 가계에 재연결해요';
+  document.getElementById('ob-error').textContent = '';
+}
+
+function showNewMode() {
+  document.getElementById('ob-mode-reconnect').style.display = 'none';
+  document.getElementById('ob-mode-new').style.display = 'block';
+  document.getElementById('ob2-desc').textContent = '처음이면 새로 만들고, 상대방이 이미 만들었다면 코드로 참여해요';
+  document.getElementById('ob-error').textContent = '';
+}
+
+async function reconnectHousehold() {
+  if (!sb) { showObError('네트워크 오류 — 잠시 후 다시 시도해요'); return; }
+  const code = document.getElementById('ob-reconnect-input').value.trim().toLowerCase();
+  if (code.length !== 6) { showObError('코드는 6자리예요'); return; }
+  showObLoading('재접속 중...');
+  try {
+    const { data: hh, error: hhErr } = await sb
+      .from('households')
+      .select()
+      .eq('invite_code', code)
+      .single();
+    if (hhErr || !hh) throw new Error('코드를 찾을 수 없어요');
+
+    const { data: user, error: uErr } = await sb
+      .from('users')
+      .select()
+      .eq('household_id', hh.id)
+      .eq('name', session.playerName)
+      .single();
+    if (uErr || !user) throw new Error(`이 가계에 ${session.playerName} 계정이 없어요`);
 
     session.householdId = hh.id;
     session.inviteCode = hh.invite_code;
