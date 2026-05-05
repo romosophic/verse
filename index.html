@@ -865,6 +865,16 @@
 
     <div class="section-title">최근 거래</div>
     <div class="tx-list" id="recentTxList"></div>
+
+    <div class="section-title">초대코드 관리</div>
+    <div id="inviteCodeCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">현재 초대코드</div>
+        <div id="inviteCodeCardDisplay" style="font-family:'Black Han Sans',sans-serif;font-size:1.5rem;letter-spacing:0.18em;color:var(--accent3)">——</div>
+        <div id="inviteCodeStatus" style="font-size:0.72rem;margin-top:3px;color:var(--accent)">● 활성</div>
+      </div>
+      <button id="inviteCodeToggleBtn" onclick="toggleInviteCode()" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap;">비활성화</button>
+    </div>
   </div>
 
   <!-- WEEKLY CHECK -->
@@ -1136,6 +1146,7 @@ async function joinHousehold() {
       .eq('invite_code', code)
       .single();
     if (error || !hh) throw new Error('코드를 찾을 수 없어요');
+    if (hh.invite_code_active === false) throw new Error('비활성화된 초대코드예요');
 
     const { data: user, error: uErr } = await sb
       .from('users')
@@ -1390,6 +1401,27 @@ async function bootApp() {
   startInterestTicker();
   setMode('income');
   if (sb) dbSaveSnapshot().catch(console.error);
+  if (sb) loadInviteStatus();
+}
+
+async function loadInviteStatus() {
+  if (!session.householdId) return;
+  const { data: hh } = await sb.from('households').select('invite_code, invite_code_active').eq('id', session.householdId).single();
+  if (!hh) return;
+  document.getElementById('inviteCodeCardDisplay').textContent = hh.invite_code || '——';
+  const active = hh.invite_code_active !== false;
+  document.getElementById('inviteCodeStatus').textContent = active ? '● 활성' : '○ 비활성';
+  document.getElementById('inviteCodeStatus').style.color = active ? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('inviteCodeToggleBtn').textContent = active ? '비활성화' : '활성화';
+}
+
+async function toggleInviteCode() {
+  if (!session.householdId || !sb) return;
+  const { data: hh } = await sb.from('households').select('invite_code_active').eq('id', session.householdId).single();
+  if (!hh) return;
+  const next = hh.invite_code_active === false ? true : false;
+  await sb.from('households').update({ invite_code_active: next }).eq('id', session.householdId);
+  await loadInviteStatus();
 }
 
 // ===== DATA =====
