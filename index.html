@@ -243,28 +243,35 @@
   }
   .ticker-rate { font-size: 0.78rem; color: var(--muted); }
 
-  /* LAST CHECK LIST */
-  .last-check-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
-  .last-check-item {
+  /* LAST CHECK (weekly page) */
+  .lc-section-title {
+    font-size: 0.82rem; color: var(--muted); letter-spacing: 0.08em;
+    text-transform: uppercase; margin: 24px 0 10px;
+  }
+  .lc-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .lc-panel {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 14px;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px;
+    border-radius: 12px; overflow: hidden;
   }
-  .last-check-item .lc-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .last-check-item .lc-owner {
-    font-size: 0.72rem; font-weight: bold; padding: 2px 7px;
-    border-radius: 99px; white-space: nowrap; flex-shrink: 0;
+  .lc-panel-header {
+    font-size: 0.82rem; font-weight: bold; padding: 7px 12px;
+    letter-spacing: 0.04em;
   }
-  .last-check-item .lc-owner.k { background: var(--accent); color: #fff; }
-  .last-check-item .lc-owner.s { background: var(--accent3); color: #fff; }
-  .last-check-item .lc-name { font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .last-check-item .lc-right { text-align: right; flex-shrink: 0; }
-  .last-check-item .lc-balance { font-size: 0.95rem; font-weight: bold; }
-  .last-check-item .lc-balance.k { color: var(--accent2); }
-  .last-check-item .lc-balance.s { color: var(--accent3); }
-  .last-check-item .lc-date { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-  .last-check-empty { color: var(--muted); font-size: 0.85rem; padding: 10px 0; }
+  .lc-panel-header.k { background: var(--accent); color: #fff; }
+  .lc-panel-header.s { background: var(--accent3); color: #fff; }
+  .lc-row {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+  .lc-row:last-child { border-bottom: none; }
+  .lc-row-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc-row-right { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .lc-row-bal { font-weight: bold; font-size: 0.88rem; }
+  .lc-row-bal.k { color: var(--accent2); }
+  .lc-row-bal.s { color: var(--accent3); }
+  .lc-row-date { font-size: 0.72rem; color: var(--muted); }
+  .lc-empty { padding: 10px 12px; font-size: 0.8rem; color: var(--muted); }
 
   /* ACCOUNT CARDS */
   .section-title {
@@ -930,9 +937,6 @@
       </div>
     </div>
 
-    <div class="section-title">마지막 체크 내역</div>
-    <div id="lastCheckList"></div>
-
     <div class="section-title">최근 거래</div>
     <div class="tx-list" id="recentTxList"></div>
   </div>
@@ -1535,7 +1539,7 @@ function subscribeRealtime() {
   sb.channel('bulseu-' + session.householdId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts',
         filter: `household_id=eq.${session.householdId}` },
-      async () => { await dbLoadAll(); renderAccounts(); renderLastCheck(); renderTxList('recentTxList'); renderTxList('allTxList'); renderChart(); })
+      async () => { await dbLoadAll(); renderAccounts(); renderTxList('recentTxList'); renderTxList('allTxList'); renderChart(); })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transactions',
         filter: `household_id=eq.${session.householdId}` },
       async () => { await dbLoadAll(); renderTxList('recentTxList'); renderTxList('allTxList'); })
@@ -1563,7 +1567,6 @@ async function bootApp() {
   initWeekly();
   renderChart('1M');
   renderAccounts();
-  renderLastCheck();
   renderTxList('recentTxList');
   renderTxList('allTxList');
   startInterestTicker();
@@ -1997,6 +2000,7 @@ function renderWeekly() {
 
 function renderWeeklySelect(container) {
   const prog = state.weeklyProgress;
+
   const makeCard = (p) => {
     const cls = PLAYER_CLASS[p];
     const accs = playerAccounts(p);
@@ -2032,6 +2036,28 @@ function renderWeeklySelect(container) {
     return `<button class="player-btn ${cls} ${btnCls}" ${onclick}>${label}</button>`;
   };
 
+  const fmtTs = ts => {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const makeLastCheck = (p) => {
+    const isK = p === '경우';
+    const cls = isK ? 'k' : 's';
+    const accs = playerAccounts(p).filter(a => a.lastCheckedAt);
+    if (!accs.length) return `<div class="lc-empty">체크 내역 없음</div>`;
+    accs.sort((a, b) => new Date(b.lastCheckedAt) - new Date(a.lastCheckedAt));
+    return accs.map(a => `
+      <div class="lc-row">
+        <span class="lc-row-name">${a.bank} ${a.name}</span>
+        <span class="lc-row-right">
+          <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
+          <span class="lc-row-date">${fmtTs(a.lastCheckedAt)}</span>
+        </span>
+      </div>`).join('');
+  };
+
   container.innerHTML = `
     <div class="player-select-wrap">
       <div class="player-select-title">주간 잔액 체크 💬</div>
@@ -2040,6 +2066,18 @@ function renderWeeklySelect(container) {
     <div class="dual-status">${makeCard('경우')}${makeCard('새롬')}</div>
     ${makeBtn('경우')}
     ${makeBtn('새롬')}
+
+    <div class="lc-section-title">마지막 체크 내역</div>
+    <div class="lc-panels">
+      <div class="lc-panel">
+        <div class="lc-panel-header k">경우</div>
+        ${makeLastCheck('경우')}
+      </div>
+      <div class="lc-panel">
+        <div class="lc-panel-header s">새롬</div>
+        ${makeLastCheck('새롬')}
+      </div>
+    </div>
   `;
 }
 
@@ -2476,45 +2514,12 @@ function applyQABalance(accountIdx, newBalance) {
 
   renderWeekly();
   renderAccounts();
-  renderLastCheck();
   renderTxList('recentTxList');
   renderTxList('allTxList');
   initWealthHistory();
   renderChart();
 }
 
-function renderLastCheck() {
-  const el = document.getElementById('lastCheckList');
-  if (!el) return;
-
-  const checked = state.accounts.filter(a => a.lastCheckedAt);
-  if (!checked.length) {
-    el.innerHTML = '<div class="last-check-empty">아직 체크된 자산이 없어요.</div>';
-    return;
-  }
-
-  checked.sort((a, b) => new Date(b.lastCheckedAt) - new Date(a.lastCheckedAt));
-
-  const fmt = ts => {
-    const d = new Date(ts);
-    const pad = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-
-  el.innerHTML = `<div class="last-check-list">${checked.map(a => {
-    const isK = a.owner === '경우';
-    return `<div class="last-check-item">
-      <div class="lc-left">
-        <span class="lc-owner ${isK ? 'k' : 's'}">${a.owner}</span>
-        <span class="lc-name">${a.bank} ${a.name}</span>
-      </div>
-      <div class="lc-right">
-        <div class="lc-balance ${isK ? 'k' : 's'}">${fmt(a.balance)}</div>
-        <div class="lc-date">${fmt(a.lastCheckedAt)}</div>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-}
 
 // ===== COIN BURST =====
 const coinCanvas = document.getElementById('coinCanvas');
