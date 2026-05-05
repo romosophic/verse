@@ -4,8 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>벌쓰 — 벌고쓰는 우리의 서사</title>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
+  @font-face {
+    font-family: 'MaruMinya';
+    src: url('https://cdn.jsdelivr.net/gh/quiple/x12y12pxMaruMinyaHangul@main/fonts/x12y12pxMaruMinyaHangul.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
   :root {
     --bg: #EDEDEF;
     --surface: #FFFFFF;
@@ -25,7 +32,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif;
+    font-family: 'MaruMinya', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -77,7 +84,7 @@
   }
   .nav-brand-sub {
     font-size: 0.55rem; color: var(--muted); letter-spacing: 0.05em;
-    margin-top: 1px; font-family: 'Gowun Dodum', sans-serif;
+    margin-top: 1px; font-family: 'MaruMinya', sans-serif;
   }
 
   /* BRAND POPUP */
@@ -148,7 +155,7 @@
   .nav-tab {
     padding: 6px 14px; border-radius: 20px; border: none;
     background: transparent; color: var(--muted);
-    font-family: 'Gowun Dodum', sans-serif;
+    font-family: 'MaruMinya', sans-serif;
     font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
   }
   .nav-tab.active {
@@ -211,7 +218,7 @@
   .period-btn {
     padding: 3px 10px; border-radius: 10px; border: 1px solid var(--border);
     background: transparent; color: var(--muted); font-size: 0.72rem; cursor: pointer;
-    font-family: 'Gowun Dodum', sans-serif; transition: all 0.2s;
+    font-family: 'MaruMinya', sans-serif; transition: all 0.2s;
   }
   .period-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
@@ -305,7 +312,7 @@
   .qa-input {
     flex: 1; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 16px; color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif; font-size: 1rem;
+    font-family: 'MaruMinya', sans-serif; font-size: 1rem;
     outline: none; transition: border-color 0.2s;
   }
   .qa-input:focus { border-color: var(--accent2); }
@@ -389,7 +396,7 @@
   .form-input {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 16px; color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif; font-size: 1rem; outline: none;
+    font-family: 'MaruMinya', sans-serif; font-size: 1rem; outline: none;
     transition: border-color 0.2s;
   }
   .form-input:focus { border-color: var(--accent); }
@@ -397,7 +404,7 @@
   .form-select {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 16px; color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif; font-size: 0.95rem; outline: none;
+    font-family: 'MaruMinya', sans-serif; font-size: 0.95rem; outline: none;
     cursor: pointer;
   }
   .submit-btn {
@@ -485,7 +492,7 @@
   .bnav-btn {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     background: none; border: none; color: var(--muted);
-    font-family: 'Gowun Dodum', sans-serif; font-size: 0.62rem; cursor: pointer;
+    font-family: 'MaruMinya', sans-serif; font-size: 0.62rem; cursor: pointer;
     padding: 4px 16px; border-radius: 12px; transition: all 0.2s;
   }
   .bnav-btn.active { color: var(--accent); }
@@ -624,7 +631,7 @@
   .back-to-select {
     margin-left: auto; background: none; border: 1px solid var(--border);
     border-radius: 8px; padding: 5px 12px; color: var(--muted);
-    font-size: 0.75rem; cursor: pointer; font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.75rem; cursor: pointer; font-family: 'MaruMinya', sans-serif;
   }
   .back-to-select:hover { border-color: var(--accent2); color: var(--text); }
 
