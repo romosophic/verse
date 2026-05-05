@@ -248,9 +248,34 @@
     font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em;
     text-transform: uppercase; margin: 20px 0 10px;
   }
-  .accounts-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;
+  .accounts-grid { display: none; }
+
+  .accounts-table { width: 100%; border-collapse: collapse; }
+  .accounts-table th {
+    text-align: left; font-size: 0.78rem; color: var(--muted);
+    padding: 8px 12px; border-bottom: 2px solid var(--border);
+    cursor: pointer; user-select: none; white-space: nowrap;
   }
+  .accounts-table th:hover { color: var(--text); }
+  .accounts-table th.sorted { color: var(--text); }
+  .accounts-table th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
+  .accounts-table th.sorted .sort-icon { opacity: 1; }
+  .accounts-table td {
+    padding: 12px 12px; border-bottom: 1px solid var(--border);
+    font-size: 0.92rem; vertical-align: middle;
+  }
+  .accounts-table tr { cursor: pointer; transition: background 0.15s; }
+  .accounts-table tr:hover td { background: var(--surface2); }
+  .accounts-table tr.owner-k td:first-child { border-left: 3px solid var(--accent); }
+  .accounts-table tr.owner-s td:first-child { border-left: 3px solid var(--accent3); }
+  .accounts-table .col-owner { font-weight: bold; }
+  .accounts-table .col-owner.k { color: var(--accent); }
+  .accounts-table .col-owner.s { color: var(--accent3); }
+  .accounts-table .col-balance { font-family: 'MaruMinya', sans-serif; text-align: right; }
+  .accounts-table .col-balance.k { color: var(--accent2); }
+  .accounts-table .col-balance.s { color: var(--accent3); }
+  .accounts-table .col-rate { text-align: right; color: var(--gold); font-size: 0.85rem; }
+  .accounts-table .col-num { text-align: right; }
   .account-card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; padding: 16px; cursor: pointer;
@@ -952,7 +977,7 @@
       자산 현황
       <button onclick="document.getElementById('addAccountModal').classList.add('open')" style="float:right;border:none;background:var(--accent);color:#fff;font-family:'MaruMinya',sans-serif;font-size:0.82rem;padding:4px 12px;border-radius:8px;cursor:pointer;">＋ 추가</button>
     </div>
-    <div class="accounts-grid" id="accountsGrid"></div>
+    <div id="accountsGrid"></div>
 
     <div class="section-title" style="margin-top:20px">
       <span>초대코드 관리</span>
@@ -1662,22 +1687,52 @@ function startInterestTicker() {
 }
 
 // ===== ACCOUNTS =====
+let _accSort = { col: 'owner', dir: 1 };
+
+function sortAccounts(col) {
+  if (_accSort.col === col) _accSort.dir *= -1;
+  else { _accSort.col = col; _accSort.dir = 1; }
+  renderAccounts();
+}
+
 function renderAccounts() {
   const grid = document.getElementById('accountsGrid');
-  grid.innerHTML = '';
-  state.accounts.forEach(a => {
-    const card = document.createElement('div');
-    const ownerClass = a.owner === '경우' ? 'owner-k' : a.owner === '새롬' ? 'owner-s' : '';
-    card.className = 'account-card ' + ownerClass;
-    card.innerHTML = `
-      <div class="bank">${a.bank} · <span style="color:${a.owner === '경우' ? 'var(--accent)' : 'var(--accent3)'};font-weight:bold">${a.owner}</span></div>
-      <div class="name">${a.name}</div>
-      <div class="balance count-anim">${fmt(a.balance)}</div>
-      <div class="rate-badge">연 ${a.rate}%</div>
-    `;
-    card.onclick = () => openEditBalanceModal(a);
-    grid.appendChild(card);
+  if (!grid) return;
+
+  const cols = [
+    { key: 'owner', label: '소유자' },
+    { key: 'bank',  label: '은행' },
+    { key: 'name',  label: '계좌명' },
+    { key: 'balance', label: '잔액', num: true },
+    { key: 'rate',  label: '이율', num: true },
+  ];
+
+  const sorted = [...state.accounts].sort((a, b) => {
+    const av = a[_accSort.col], bv = b[_accSort.col];
+    if (typeof av === 'number') return (av - bv) * _accSort.dir;
+    return String(av).localeCompare(String(bv)) * _accSort.dir;
   });
+
+  const thead = cols.map(c => {
+    const active = _accSort.col === c.key;
+    const arrow = active ? (_accSort.dir === 1 ? '▲' : '▼') : '▲';
+    return `<th class="${active ? 'sorted' : ''} ${c.num ? 'col-num' : ''}" onclick="sortAccounts('${c.key}')">${c.label}<span class="sort-icon">${arrow}</span></th>`;
+  }).join('');
+
+  const tbody = sorted.map(a => {
+    const ok = a.owner === '경우';
+    const rowClass = ok ? 'owner-k' : 'owner-s';
+    const oc = ok ? 'k' : 's';
+    return `<tr class="${rowClass}" onclick="openEditBalanceModal(state.accounts.find(x=>x.id===${a.id}))">
+      <td><span class="col-owner ${oc}">${a.owner}</span></td>
+      <td>${a.bank}</td>
+      <td>${a.name}</td>
+      <td class="col-balance ${oc}">${fmt(a.balance)}</td>
+      <td class="col-rate">연 ${a.rate}%</td>
+    </tr>`;
+  }).join('');
+
+  grid.innerHTML = `<table class="accounts-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
 
   // populate account selects
   const opts = state.accounts.map(a => `<option value="${a.id}">${a.bank} ${a.name}</option>`).join('');
