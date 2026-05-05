@@ -2027,10 +2027,11 @@ function renderWeeklyQA(container, player) {
         📌 이전 기록: <strong style="color:${cls === 'k' ? 'var(--accent2)' : 'var(--gold)'}">${fmt(acc.prevBalance ?? acc.balance)}</strong>
       </div>
       <div class="qa-input-row">
-        <input class="qa-input" id="qaInput" type="number" placeholder="${(acc.prevBalance ?? acc.balance).toLocaleString()}" />
+        <input class="qa-input" id="qaInput" type="number" value="${acc.prevBalance ?? acc.balance}" />
         <span class="qa-unit">원</span>
         <button class="qa-confirm ${cls}" onclick="confirmQA(${acc.idx})">확인</button>
       </div>
+      <button onclick="confirmQAUnchanged(${acc.idx})" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'MaruMinya',sans-serif;font-size:0.88rem;cursor:pointer;">변동 없음 → 바로 확인</button>
     </div>
 
     <div class="progress-bar-wrap">
@@ -2180,6 +2181,11 @@ function resetWeeklyAndRefresh() {
   renderWeekly();
 }
 
+
+function confirmQAUnchanged(accountIdx) {
+  const acc = state.accounts[accountIdx];
+  applyQABalance(accountIdx, acc.prevBalance ?? acc.balance);
+}
 
 function confirmQA(accountIdx) {
   const val = parseFloat(document.getElementById('qaInput').value);
