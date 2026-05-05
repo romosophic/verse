@@ -243,6 +243,29 @@
   }
   .ticker-rate { font-size: 0.78rem; color: var(--muted); }
 
+  /* LAST CHECK LIST */
+  .last-check-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .last-check-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .last-check-item .lc-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .last-check-item .lc-owner {
+    font-size: 0.72rem; font-weight: bold; padding: 2px 7px;
+    border-radius: 99px; white-space: nowrap; flex-shrink: 0;
+  }
+  .last-check-item .lc-owner.k { background: var(--accent); color: #fff; }
+  .last-check-item .lc-owner.s { background: var(--accent3); color: #fff; }
+  .last-check-item .lc-name { font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .last-check-item .lc-right { text-align: right; flex-shrink: 0; }
+  .last-check-item .lc-balance { font-size: 0.95rem; font-weight: bold; }
+  .last-check-item .lc-balance.k { color: var(--accent2); }
+  .last-check-item .lc-balance.s { color: var(--accent3); }
+  .last-check-item .lc-date { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .last-check-empty { color: var(--muted); font-size: 0.85rem; padding: 10px 0; }
+
   /* ACCOUNT CARDS */
   .section-title {
     font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em;
@@ -907,6 +930,9 @@
       </div>
     </div>
 
+    <div class="section-title">마지막 체크 내역</div>
+    <div id="lastCheckList"></div>
+
     <div class="section-title">최근 거래</div>
     <div class="tx-list" id="recentTxList"></div>
   </div>
@@ -1376,10 +1402,11 @@ function hideInviteToast() {
 async function dbLoadAll() {
   const hid = session.householdId;
 
-  const [accsRes, txsRes, snapRes] = await Promise.all([
+  const [accsRes, txsRes, snapRes, weekRes] = await Promise.all([
     sb.from('accounts').select('*').eq('household_id', hid).eq('is_active', true).order('created_at'),
     sb.from('transactions').select('*').eq('household_id', hid).order('transacted_at', { ascending: false }).limit(100),
     sb.from('wealth_snapshots').select('*').eq('household_id', hid).order('snapshot_date').limit(30),
+    sb.from('weekly_checks').select('*').eq('household_id', hid).eq('week_start', getWeekStart()).maybeSingle(),
   ]);
 
   // accounts → state
@@ -1388,8 +1415,22 @@ async function dbLoadAll() {
     balance: a.balance, prevBalance: a.prev_balance,
     rate: parseFloat(a.rate), owner: a.owner,
     accountNumber: a.account_number || '',
+    lastCheckedAt: a.last_checked_at || null,
     _dbId: a.id,
   }));
+
+  // 이번 주 weekly_checks 로드 → state 반영
+  const wc = weekRes.data;
+  if (wc) {
+    if (wc.kyungwoo_done) {
+      state.weeklyProgress['경우'].done = true;
+      state.weeklyProgress['경우'].checkedAt = wc.kyungwoo_checked_at ? new Date(wc.kyungwoo_checked_at).getTime() : Date.now();
+    }
+    if (wc.saerom_done) {
+      state.weeklyProgress['새롬'].done = true;
+      state.weeklyProgress['새롬'].checkedAt = wc.saerom_checked_at ? new Date(wc.saerom_checked_at).getTime() : Date.now();
+    }
+  }
 
   // transactions → state
   state.transactions = (txsRes.data || []).map(t => ({
@@ -1436,9 +1477,9 @@ async function dbSaveTransaction(tx, accountId) {
 }
 
 async function dbUpdateAccountBalance(acc) {
-  const { error } = await sb.from('accounts')
-    .update({ balance: acc.balance, prev_balance: acc.prevBalance, updated_at: new Date().toISOString() })
-    .eq('id', acc._dbId || acc.id);
+  const update = { balance: acc.balance, prev_balance: acc.prevBalance, updated_at: new Date().toISOString() };
+  if (acc.lastCheckedAt) update.last_checked_at = acc.lastCheckedAt;
+  const { error } = await sb.from('accounts').update(update).eq('id', acc._dbId || acc.id);
   if (error) console.error('account update error', error);
 }
 
@@ -1494,7 +1535,7 @@ function subscribeRealtime() {
   sb.channel('bulseu-' + session.householdId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts',
         filter: `household_id=eq.${session.householdId}` },
-      async () => { await dbLoadAll(); renderAccounts(); renderTxList('recentTxList'); renderTxList('allTxList'); renderChart(); })
+      async () => { await dbLoadAll(); renderAccounts(); renderLastCheck(); renderTxList('recentTxList'); renderTxList('allTxList'); renderChart(); })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transactions',
         filter: `household_id=eq.${session.householdId}` },
       async () => { await dbLoadAll(); renderTxList('recentTxList'); renderTxList('allTxList'); })
@@ -1519,9 +1560,10 @@ async function bootApp() {
   ob.style.transition = 'opacity 0.4s';
   setTimeout(() => ob.style.display = 'none', 400);
 
-  resetWeekly();
+  initWeekly();
   renderChart('1M');
   renderAccounts();
+  renderLastCheck();
   renderTxList('recentTxList');
   renderTxList('allTxList');
   startInterestTicker();
@@ -1911,6 +1953,12 @@ function playerAccounts(player) {
   return state.accounts
     .map((a, i) => ({ ...a, idx: i }))
     .filter(a => a.owner === player || (player === '경우' && a.owner === '공동'));
+}
+
+function initWeekly() {
+  // 이미 이번 주 done 상태가 로드됐으면 초기화하지 않음
+  const alreadyStarted = state.weeklyProgress['경우'].done || state.weeklyProgress['새롬'].done;
+  if (!alreadyStarted) resetWeekly();
 }
 
 function resetWeekly() {
@@ -2409,8 +2457,10 @@ function finalizeQA(accountIdx, newBalance) {
 }
 
 function applyQABalance(accountIdx, newBalance) {
+  const now = new Date().toISOString();
   state.accounts[accountIdx].balance = newBalance;
   state.accounts[accountIdx].prevBalance = newBalance;
+  state.accounts[accountIdx].lastCheckedAt = now;
   state.weeklyStep++;
 
   if (state.weeklyPlayer) {
@@ -2426,10 +2476,44 @@ function applyQABalance(accountIdx, newBalance) {
 
   renderWeekly();
   renderAccounts();
+  renderLastCheck();
   renderTxList('recentTxList');
   renderTxList('allTxList');
   initWealthHistory();
   renderChart();
+}
+
+function renderLastCheck() {
+  const el = document.getElementById('lastCheckList');
+  if (!el) return;
+
+  const checked = state.accounts.filter(a => a.lastCheckedAt);
+  if (!checked.length) {
+    el.innerHTML = '<div class="last-check-empty">아직 체크된 자산이 없어요.</div>';
+    return;
+  }
+
+  checked.sort((a, b) => new Date(b.lastCheckedAt) - new Date(a.lastCheckedAt));
+
+  const fmt = ts => {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  el.innerHTML = `<div class="last-check-list">${checked.map(a => {
+    const isK = a.owner === '경우';
+    return `<div class="last-check-item">
+      <div class="lc-left">
+        <span class="lc-owner ${isK ? 'k' : 's'}">${a.owner}</span>
+        <span class="lc-name">${a.bank} ${a.name}</span>
+      </div>
+      <div class="lc-right">
+        <div class="lc-balance ${isK ? 'k' : 's'}">${fmt(a.balance)}</div>
+        <div class="lc-date">${fmt(a.lastCheckedAt)}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ===== COIN BURST =====
