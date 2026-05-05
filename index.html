@@ -1689,6 +1689,11 @@ function startInterestTicker() {
 // ===== ACCOUNTS =====
 let _accSort = { col: 'owner', dir: 1 };
 
+function editAccById(id) {
+  const acc = state.accounts.find(x => String(x.id) === String(id));
+  if (acc) openEditBalanceModal(acc);
+}
+
 function sortAccounts(col) {
   if (_accSort.col === col) _accSort.dir *= -1;
   else { _accSort.col = col; _accSort.dir = 1; }
@@ -1731,7 +1736,7 @@ function renderAccounts() {
       <td>${a.name}</td>
       <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
-      <td style="text-align:center;padding:0 8px"><button onclick="openEditBalanceModal(state.accounts.find(x=>x.id===${a.id}))" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
+      <td style="text-align:center;padding:0 8px"><button onclick="editAccById('${a.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
     </tr>`;
   }).join('');
 
