@@ -802,11 +802,11 @@
   </div>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('dashboard')">대시보드</button>
-    <button class="nav-tab" onclick="showPage('weekly')">주간체크</button>
-    <button class="nav-tab" onclick="showPage('income')">수입/지출</button>
-    <button class="nav-tab" onclick="showPage('txns')">거래내역</button>
-    <button class="nav-tab" onclick="showPage('assets')">자산 관리</button>
+    <button class="nav-tab active" onclick="showPage('dashboard')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">1</span>대시보드</button>
+    <button class="nav-tab" onclick="showPage('weekly')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">2</span>주간체크</button>
+    <button class="nav-tab" onclick="showPage('income')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">3</span>수입/지출</button>
+    <button class="nav-tab" onclick="showPage('txns')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">4</span>거래내역</button>
+    <button class="nav-tab" onclick="showPage('assets')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">5</span>자산 관리</button>
   </div>
   <div class="nav-user" style="display:none"></div>
 </nav>
@@ -2653,6 +2653,13 @@ document.getElementById('addAccountModal').addEventListener('click', e => {
 });
 document.getElementById('autoDeductModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeAutoModal();
+});
+
+const _pageKeys = { '1': 'dashboard', '2': 'weekly', '3': 'income', '4': 'txns', '5': 'assets' };
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (_pageKeys[e.key]) showPage(_pageKeys[e.key]);
 });
 </script>
 
