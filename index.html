@@ -1046,7 +1046,7 @@
       <div class="form-label">계좌번호 (선택)</div>
       <input class="form-input" id="newAccNumber" placeholder="123-456-789012" />
     </div>
-    <button class="submit-income" onclick="addAccount()">추가</button>
+    <button class="submit-income" onclick="addAccount()" style="width:100%;padding:18px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'MaruMinya',sans-serif;font-size:1.1rem;cursor:pointer;">추가</button>
   </div>
 </div>
 
@@ -1075,7 +1075,7 @@
       <div class="form-label">수정 사유 (선택)</div>
       <input class="form-input" id="editBalanceMemo" placeholder="예: 실계좌 확인 후 조정" />
     </div>
-    <button class="submit-income" onclick="saveEditedBalance()">저장</button>
+    <button class="submit-income" onclick="saveEditedBalance()" style="width:100%;padding:18px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'MaruMinya',sans-serif;font-size:1.1rem;cursor:pointer;">저장</button>
     <button onclick="confirmDeleteAccount()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(224,63,79,0.3);background:transparent;color:var(--danger);font-family:'Gowun Dodum',sans-serif;font-size: 1rem;cursor:pointer;">자산 삭제</button>
     <div id="deleteConfirmRow" style="display:none;margin-top:10px;background:rgba(207,75,0,0.07);border-radius:10px;padding:12px;text-align:center;">
       <div style="font-size: 0.88rem;color:var(--danger);margin-bottom:10px;">정말 삭제할까요? 되돌릴 수 없어요.</div>
