@@ -769,6 +769,7 @@
     <button class="nav-tab" onclick="showPage('weekly')">주간체크</button>
     <button class="nav-tab" onclick="showPage('income')">수입/지출</button>
     <button class="nav-tab" onclick="showPage('txns')">거래내역</button>
+    <button class="nav-tab" onclick="showPage('assets')">자산 관리</button>
   </div>
   <div class="nav-user" style="display:none"></div>
 </nav>
@@ -869,21 +870,8 @@
       </div>
     </div>
 
-    <div class="section-title">자산 현황</div>
-    <div class="accounts-grid" id="accountsGrid"></div>
-
     <div class="section-title">최근 거래</div>
     <div class="tx-list" id="recentTxList"></div>
-
-    <div class="section-title">초대코드 관리</div>
-    <div id="inviteCodeCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <div>
-        <div style="font-size: 0.78rem;color:var(--muted);margin-bottom:4px">현재 초대코드</div>
-        <div id="inviteCodeCardDisplay" style="font-family:'Black Han Sans',sans-serif;font-size:1.5rem;letter-spacing:0.18em;color:var(--accent3)">——</div>
-        <div id="inviteCodeStatus" style="font-size: 0.78rem;margin-top:3px;color:var(--accent)">● 활성</div>
-      </div>
-      <button id="inviteCodeToggleBtn" onclick="toggleInviteCode()" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;cursor:pointer;white-space:nowrap;">비활성화</button>
-    </div>
   </div>
 
   <!-- WEEKLY CHECK -->
@@ -945,6 +933,27 @@
     </div>
     <div class="tx-list" id="allTxList"></div>
   </div>
+
+  <!-- ASSETS MANAGEMENT -->
+  <div id="page-assets" class="page">
+    <div class="section-title" style="margin-top:16px">자산 현황</div>
+    <div class="accounts-grid" id="accountsGrid"></div>
+
+    <div class="section-title" style="margin-top:20px">
+      <span>초대코드 관리</span>
+      <button onclick="toggleInviteSection()" id="inviteToggleBtn" style="float:right;border:none;background:none;color:var(--muted);font-family:'MaruMinya',sans-serif;font-size:0.88rem;cursor:pointer;padding:0;">펼치기 ▼</button>
+    </div>
+    <div id="inviteCodeSection" style="display:none">
+      <div id="inviteCodeCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:4px">현재 초대코드</div>
+          <div id="inviteCodeCardDisplay" style="font-family:'MaruMinya',sans-serif;font-size:1.5rem;letter-spacing:0.18em;color:var(--accent3)">——</div>
+          <div id="inviteCodeStatus" style="font-size:0.78rem;margin-top:3px;color:var(--accent)">● 활성</div>
+        </div>
+        <button id="inviteCodeToggleBtn" onclick="toggleInviteCode()" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'MaruMinya',sans-serif;font-size:0.88rem;cursor:pointer;white-space:nowrap;">비활성화</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <!-- BOTTOM NAV (mobile) -->
@@ -960,6 +969,9 @@
   </button>
   <button class="bnav-btn" onclick="showPage('txns')">
     <span class="icon">📋</span>거래
+  </button>
+  <button class="bnav-btn" onclick="showPage('assets')">
+    <span class="icon">🏦</span>자산
   </button>
 </div>
 
@@ -1452,6 +1464,15 @@ async function bootApp() {
   setMode('income');
   if (sb) dbSaveSnapshot().catch(console.error);
   if (sb) loadInviteStatus();
+}
+
+function toggleInviteSection() {
+  const sec = document.getElementById('inviteCodeSection');
+  const btn = document.getElementById('inviteToggleBtn');
+  const open = sec.style.display === 'none';
+  sec.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '접기 ▲' : '펼치기 ▼';
+  if (open) loadInviteStatus();
 }
 
 async function loadInviteStatus() {
@@ -2464,11 +2485,13 @@ function showPage(id) {
   document.querySelectorAll('.bnav-btn').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
 
-  const tabs = ['dashboard','weekly','income','txns'];
+  const tabs = ['dashboard','weekly','income','txns','assets'];
   const navTabs = document.querySelectorAll('.nav-tab');
   const bTabs = document.querySelectorAll('.bnav-btn');
   const idx = tabs.indexOf(id);
   if (idx >= 0) { navTabs[idx]?.classList.add('active'); bTabs[idx]?.classList.add('active'); }
+
+  if (id === 'assets') renderAccounts();
 
   if (id === 'weekly') {
     if (!state.weeklyProgress) resetWeekly();
