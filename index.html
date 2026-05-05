@@ -928,7 +928,7 @@
         <div>
           <div class="ticker-label">오늘 발생 이자</div>
           <div class="ticker-val" id="todayInterest">₩0.00</div>
-          <div class="ticker-rate">연 3.5% 기준 · 초당 계산</div>
+          <div class="ticker-rate" id="tickerRate">연 --% 기준 · 초당 계산</div>
         </div>
       </div>
       <div style="text-align:right">
@@ -1743,15 +1743,21 @@ function setPeriod(btn, p) {
 // ===== INTEREST TICKER =====
 function startInterestTicker() {
   setInterval(() => {
-    const dailyInterest = totalRate() / 365;
+    const annualInterest = totalRate();
+    const dailyInterest = annualInterest / 365;
     const perSecond = dailyInterest / 86400;
     const elapsed = (Date.now() - state.startTime) / 1000;
     const accrued = perSecond * elapsed;
     state.interestAccrued = accrued;
+
+    const bal = totalBalance();
+    const effRate = bal > 0 ? (annualInterest / bal * 100) : 0;
+
     document.getElementById('todayInterest').textContent = fmt(accrued, 2);
-    document.getElementById('totalWealth').textContent = fmt(totalBalance() + accrued);
+    document.getElementById('totalWealth').textContent = fmt(bal + accrued);
     document.getElementById('interestTicker').textContent = `💹 초당 +${perSecond.toFixed(4)}원 적립 중`;
-    document.getElementById('monthlyInterest').textContent = fmt(totalRate() / 12);
+    document.getElementById('monthlyInterest').textContent = fmt(annualInterest / 12);
+    document.getElementById('tickerRate').textContent = `연 ${effRate.toFixed(2)}% 기준 · 초당 계산`;
   }, 200);
 }
 
