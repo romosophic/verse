@@ -940,7 +940,7 @@
       </div>
       <div class="form-row">
         <div class="form-label">금액 (원)</div>
-        <input class="form-input" type="number" id="entryAmount" placeholder="300,000" />
+        <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="entryAmount" placeholder="300,000" />
       </div>
       <div class="form-row">
         <div class="form-label" id="accountLabel">입금 계좌</div>
@@ -1036,7 +1036,7 @@
     </div>
     <div class="form-row">
       <div class="form-label">현재 잔액</div>
-      <input class="form-input" type="number" id="newBalance" placeholder="5000000" />
+      <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="newBalance" placeholder="5000000" />
     </div>
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
@@ -1061,7 +1061,7 @@
     </div>
     <div class="form-row">
       <div class="form-label">수정할 잔액</div>
-      <input class="form-input" type="number" id="editBalanceInput" placeholder="0" />
+      <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="editBalanceInput" placeholder="0" />
     </div>
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
@@ -1169,6 +1169,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// ===== AMOUNT INPUT UTILS =====
+function fmtRaw(n) {
+  if (n === null || n === undefined || isNaN(n)) return '';
+  return Math.floor(n).toLocaleString('ko-KR');
+}
+function fmtAmtInput(el) {
+  const digits = el.value.replace(/[^0-9]/g, '');
+  el.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+}
+function parseAmt(id) {
+  const v = document.getElementById(id)?.value || '';
+  return parseFloat(v.replace(/,/g, '')) || 0;
+}
+
 // ===== SUPABASE =====
 const SUPABASE_URL = 'https://jfegtbghvcivsvuaqzjj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_wHL5JE3uWF5CfMuqP64dWA_rYpn3BQO';
@@ -1826,7 +1840,7 @@ function setMode(mode) {
 
 // ===== SUBMIT ENTRY =====
 function submitEntry() {
-  const amount = parseFloat(document.getElementById('entryAmount').value);
+  const amount = parseAmt('entryAmount');
   if (isNaN(amount) || amount <= 0) {
     document.getElementById('entryAmount').style.borderColor = 'var(--danger)';
     return;
@@ -2027,7 +2041,7 @@ function renderWeeklyQA(container, player) {
         📌 이전 기록: <strong style="color:${cls === 'k' ? 'var(--accent2)' : 'var(--gold)'}">${fmt(acc.prevBalance ?? acc.balance)}</strong>
       </div>
       <div class="qa-input-row">
-        <input class="qa-input" id="qaInput" type="number" value="${acc.prevBalance ?? acc.balance}" />
+        <input class="qa-input" id="qaInput" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" value="${fmtRaw(acc.prevBalance ?? acc.balance)}" />
         <span class="qa-unit">원</span>
         <button class="qa-confirm ${cls}" onclick="confirmQA(${acc.idx})">확인</button>
       </div>
@@ -2188,7 +2202,7 @@ function confirmQAUnchanged(accountIdx) {
 }
 
 function confirmQA(accountIdx) {
-  const val = parseFloat(document.getElementById('qaInput').value);
+  const val = parseAmt('qaInput');
   if (isNaN(val) || val < 0) return;
 
   const acc = state.accounts[accountIdx];
@@ -2303,7 +2317,7 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
             style="flex:1.2;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;outline:none;" />
         </div>
         <div style="display:flex;gap:6px;">
-          <input id="modalExpAmt" type="number" placeholder="금액 (원)"
+          <input id="modalExpAmt" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" placeholder="금액 (원)"
             style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;outline:none;" />
           <button onclick="addModalExpense(${accountIdx}, ${newBalance})"
             style="background:linear-gradient(135deg,var(--danger),var(--accent3));border:none;border-radius:8px;padding:8px 16px;color:var(--bg);font-family:'Black Han Sans',sans-serif;font-size: 0.88rem;cursor:pointer;white-space:nowrap;">
@@ -2318,7 +2332,7 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
 }
 
 function addModalExpense(accountIdx, newBalance) {
-  const amt = parseFloat(document.getElementById('modalExpAmt').value);
+  const amt = parseAmt('modalExpAmt');
   if (isNaN(amt) || amt <= 0) {
     document.getElementById('modalExpAmt').style.borderColor = 'var(--danger)';
     return;
@@ -2483,7 +2497,7 @@ function openEditBalanceModal(acc) {
   _editingAcc = acc;
   document.getElementById('editBalanceAccName').textContent = `${acc.bank} · ${acc.name} (${acc.owner})`;
   document.getElementById('editBalanceCurrent').textContent = `현재: ${fmt(acc.balance)}`;
-  document.getElementById('editBalanceInput').value = acc.balance;
+  document.getElementById('editBalanceInput').value = fmtRaw(acc.balance);
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
   document.getElementById('editBalanceMemo').value = '';
@@ -2510,7 +2524,7 @@ async function deleteAccount() {
 }
 async function saveEditedBalance() {
   if (!_editingAcc) return;
-  const newBal = parseFloat(document.getElementById('editBalanceInput').value);
+  const newBal = parseAmt('editBalanceInput');
   const newRate = parseFloat(document.getElementById('editBalanceRate').value);
   if (isNaN(newBal)) return;
   const memo = document.getElementById('editBalanceMemo').value.trim() || '기초 자산 수정';
@@ -2554,7 +2568,7 @@ async function saveEditedBalance() {
 async function addAccount() {
   const bank = document.getElementById('newBank').value.trim() || '은행';
   const name = document.getElementById('newAccName').value.trim() || '계좌';
-  const balance = parseFloat(document.getElementById('newBalance').value) || 0;
+  const balance = parseAmt('newBalance') || 0;
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
   const owner = document.getElementById('newOwner').value;
   const accountNumber = document.getElementById('newAccNumber').value.trim();
