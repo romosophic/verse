@@ -1000,6 +1000,14 @@
       <input class="form-input" id="editBalanceMemo" placeholder="예: 실계좌 확인 후 조정" />
     </div>
     <button class="submit-income" onclick="saveEditedBalance()">저장</button>
+    <button onclick="confirmDeleteAccount()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(207,75,0,0.3);background:transparent;color:var(--danger);font-family:'Gowun Dodum',sans-serif;font-size:0.9rem;cursor:pointer;">자산 삭제</button>
+    <div id="deleteConfirmRow" style="display:none;margin-top:10px;background:rgba(207,75,0,0.07);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:0.82rem;color:var(--danger);margin-bottom:10px;">정말 삭제할까요? 되돌릴 수 없어요.</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('deleteConfirmRow').style.display='none'" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;cursor:pointer;">취소</button>
+        <button onclick="deleteAccount()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--danger);color:#fff;font-family:'Black Han Sans',sans-serif;cursor:pointer;">삭제</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2353,7 +2361,22 @@ function openEditBalanceModal(acc) {
 }
 function closeEditBalanceModal() {
   document.getElementById('editBalanceModal').classList.remove('open');
+  document.getElementById('deleteConfirmRow').style.display = 'none';
   _editingAcc = null;
+}
+function confirmDeleteAccount() {
+  document.getElementById('deleteConfirmRow').style.display = 'block';
+}
+async function deleteAccount() {
+  if (!_editingAcc) return;
+  state.accounts = state.accounts.filter(a => a.id !== _editingAcc.id);
+  if (sb) {
+    await sb.from('accounts').update({ is_active: false }).eq('id', _editingAcc._dbId || _editingAcc.id);
+  }
+  renderAccounts();
+  renderTxList('recentTxList');
+  renderTxList('allTxList');
+  closeEditBalanceModal();
 }
 async function saveEditedBalance() {
   if (!_editingAcc) return;
