@@ -1042,6 +1042,10 @@
       <div class="form-label">연 이율 (%)</div>
       <input class="form-input" type="number" id="newRate" placeholder="3.5" step="0.01" />
     </div>
+    <div class="form-row">
+      <div class="form-label">계좌번호 (선택)</div>
+      <input class="form-input" id="newAccNumber" placeholder="123-456-789012" />
+    </div>
     <button class="submit-income" onclick="addAccount()">추가</button>
   </div>
 </div>
@@ -1062,6 +1066,10 @@
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
       <input class="form-input" type="number" id="editBalanceRate" placeholder="3.5" step="0.01" />
+    </div>
+    <div class="form-row">
+      <div class="form-label">계좌번호</div>
+      <input class="form-input" id="editBalanceAccNumber" placeholder="123-456-789012" />
     </div>
     <div class="form-row">
       <div class="form-label">수정 사유 (선택)</div>
@@ -1365,6 +1373,7 @@ async function dbLoadAll() {
     id: a.id, bank: a.bank, name: a.name,
     balance: a.balance, prevBalance: a.prev_balance,
     rate: parseFloat(a.rate), owner: a.owner,
+    accountNumber: a.account_number || '',
     _dbId: a.id,
   }));
 
@@ -1426,6 +1435,7 @@ async function dbSaveAccount(acc) {
     bank: acc.bank, name: acc.name,
     balance: acc.balance, prev_balance: acc.balance,
     rate: acc.rate, is_active: true,
+    account_number: acc.accountNumber || null,
   }).select().single();
   if (error) { console.error('account insert error', error); return null; }
   return data;
@@ -1708,6 +1718,7 @@ function renderAccounts() {
     { key: 'owner', label: '소유자' },
     { key: 'bank',  label: '은행' },
     { key: 'name',  label: '계좌명' },
+    { key: 'accountNumber', label: '계좌번호' },
     { key: 'balance', label: '잔액', num: true },
     { key: 'rate',  label: '이율', num: true },
     { key: null,    label: '', noSort: true },
@@ -1734,6 +1745,7 @@ function renderAccounts() {
       <td><span class="col-owner ${oc}">${a.owner}</span></td>
       <td>${a.bank}</td>
       <td>${a.name}</td>
+      <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
       <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
       <td style="text-align:center;padding:0 8px"><button onclick="editAccById('${a.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
@@ -2467,6 +2479,7 @@ function openEditBalanceModal(acc) {
   document.getElementById('editBalanceCurrent').textContent = `현재: ${fmt(acc.balance)}`;
   document.getElementById('editBalanceInput').value = acc.balance;
   document.getElementById('editBalanceRate').value = acc.rate;
+  document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
   document.getElementById('editBalanceMemo').value = '';
   document.getElementById('editBalanceModal').classList.add('open');
 }
@@ -2502,11 +2515,12 @@ async function saveEditedBalance() {
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
   _editingAcc.balance = newBal;
+  _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, updated_at: new Date().toISOString() })
+      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
@@ -2537,8 +2551,9 @@ async function addAccount() {
   const balance = parseFloat(document.getElementById('newBalance').value) || 0;
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
   const owner = document.getElementById('newOwner').value;
+  const accountNumber = document.getElementById('newAccNumber').value.trim();
 
-  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, prevBalance: balance };
+  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, accountNumber, prevBalance: balance };
   state.accounts.push(newAcc);
 
   if (session.householdId) {
