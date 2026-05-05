@@ -17,14 +17,16 @@
     --surface: #FFFFFF;
     --surface2: #E4E4E8;
     --border: #D0D0D6;
-    --accent: #1A6FA3;      /* 경우 블루 — 메인 */
-    --accent2: #0F5A8A;     /* 경우 딥블루 */
-    --accent3: #7A5200;     /* 새롬 골드 */
-    --gold: #5C3C00;        /* 새롬 앰버 */
-    --text: #1A1A1A;
-    --muted: #7A7A82;
+    --accent: #0E6BAD;      /* 경우 블루 — 메인 */
+    --accent2: #0A5490;     /* 경우 딥블루 */
+    --accent3: #8B5E00;     /* 새롬 골드 */
+    --gold: #6B4400;        /* 새롬 앰버 */
+    --text: #111111;
+    --muted: #606068;
     --danger: #CF4B00;
   }
+
+  html { font-size: 18px; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -82,7 +84,7 @@
     line-height: 1;
   }
   .nav-brand-sub {
-    font-size: 0.55rem; color: var(--muted); letter-spacing: 0.05em;
+    font-size: 0.72rem; color: var(--muted); letter-spacing: 0.05em;
     margin-top: 1px; font-family: 'MaruMinya', sans-serif;
   }
 
@@ -121,7 +123,7 @@
     margin-bottom: 4px; line-height: 1;
   }
   .bp-subtitle {
-    font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em;
+    font-size: 0.85rem; color: var(--muted); letter-spacing: 0.12em;
     margin-bottom: 22px; text-transform: uppercase;
   }
   .bp-meaning {
@@ -134,13 +136,13 @@
   }
   .bp-meaning-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
   .bp-meaning-label {
-    font-family: 'MaruMinya', sans-serif; font-size: 0.82rem;
+    font-family: 'MaruMinya', sans-serif; font-size: 0.88rem;
     margin-bottom: 3px;
   }
   .bp-meaning-label.green { color: var(--accent); }
   .bp-meaning-label.blue { color: var(--accent2); }
   .bp-meaning-label.gold { color: var(--gold); }
-  .bp-meaning-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .bp-meaning-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
   .bp-close {
     width: 100%; padding: 14px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -155,13 +157,13 @@
     padding: 6px 14px; border-radius: 20px; border: none;
     background: transparent; color: var(--muted);
     font-family: 'MaruMinya', sans-serif;
-    font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
+    font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
   }
   .nav-tab.active {
     background: var(--surface2);
     color: var(--text);
   }
-  .nav-user { font-size: 0.8rem; color: var(--muted); }
+  .nav-user { font-size: 0.88rem; color: var(--muted); }
 
   /* MAIN */
   main {
@@ -177,7 +179,7 @@
     text-align: center; padding: 32px 20px 24px;
   }
   .wealth-label {
-    font-size: 0.8rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: 0.88rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
     margin-bottom: 8px;
   }
   .wealth-amount {
@@ -188,12 +190,12 @@
     line-height: 1;
   }
   .wealth-ticker {
-    font-size: 0.85rem; color: var(--accent); margin-top: 6px;
+    font-size: 0.92rem; color: var(--accent); margin-top: 6px;
     font-variant-numeric: tabular-nums;
   }
   .wealth-change {
     display: inline-flex; align-items: center; gap: 4px;
-    font-size: 0.78rem; color: var(--accent); margin-top: 4px;
+    font-size: 0.85rem; color: var(--accent); margin-top: 4px;
     background: rgba(156,198,219,0.1); padding: 3px 10px; border-radius: 20px;
   }
 
@@ -212,11 +214,11 @@
   .chart-header {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
   }
-  .chart-title { font-size: 0.85rem; color: var(--muted); }
+  .chart-title { font-size: 0.92rem; color: var(--muted); }
   .chart-period-btns { display: flex; gap: 4px; }
   .period-btn {
     padding: 3px 10px; border-radius: 10px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted); font-size: 0.72rem; cursor: pointer;
+    background: transparent; color: var(--muted); font-size: 0.78rem; cursor: pointer;
     font-family: 'MaruMinya', sans-serif; transition: all 0.2s;
   }
   .period-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
@@ -233,16 +235,16 @@
   .ticker-left { display: flex; align-items: center; gap: 12px; }
   .ticker-icon { font-size: 1.6rem; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
-  .ticker-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
+  .ticker-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 2px; }
   .ticker-val {
     font-family: 'MaruMinya', sans-serif; font-size: 1.4rem;
     color: var(--accent); font-variant-numeric: tabular-nums;
   }
-  .ticker-rate { font-size: 0.72rem; color: var(--muted); }
+  .ticker-rate { font-size: 0.78rem; color: var(--muted); }
 
   /* ACCOUNT CARDS */
   .section-title {
-    font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em;
+    font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em;
     text-transform: uppercase; margin: 20px 0 10px;
   }
   .accounts-grid {
@@ -254,8 +256,8 @@
     transition: all 0.2s; position: relative; overflow: hidden;
   }
   .account-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
-  .account-card .bank { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
-  .account-card .name { font-size: 0.9rem; margin-bottom: 8px; }
+  .account-card .bank { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  .account-card .name { font-size: 1rem; margin-bottom: 8px; }
   .account-card .balance {
     font-family: 'MaruMinya', sans-serif; font-size: 1.2rem;
     color: var(--accent2);
@@ -263,12 +265,12 @@
   .account-card .rate-badge {
     position: absolute; top: 12px; right: 12px;
     background: rgba(221,186,125,0.15); color: var(--gold);
-    font-size: 0.65rem; padding: 2px 7px; border-radius: 8px;
+    font-size: 0.75rem; padding: 2px 7px; border-radius: 8px;
   }
   .account-card.add-card {
     border-style: dashed; background: transparent;
     display: flex; align-items: center; justify-content: center;
-    gap: 6px; color: var(--muted); font-size: 0.85rem;
+    gap: 6px; color: var(--muted); font-size: 0.92rem;
     min-height: 90px;
   }
   .account-card.add-card:hover { color: var(--text); border-color: var(--accent2); }
@@ -282,9 +284,9 @@
   }
   .tx-emoji { font-size: 1.4rem; width: 36px; text-align: center; }
   .tx-info { flex: 1; }
-  .tx-name { font-size: 0.88rem; margin-bottom: 2px; }
-  .tx-meta { font-size: 0.72rem; color: var(--muted); }
-  .tx-amount { font-family: 'MaruMinya', sans-serif; font-size: 0.95rem; }
+  .tx-name { font-size: 0.95rem; margin-bottom: 2px; }
+  .tx-meta { font-size: 0.78rem; color: var(--muted); }
+  .tx-amount { font-family: 'MaruMinya', sans-serif; font-size: 1.05rem; }
   .tx-amount.out { color: var(--danger); }
   .tx-amount.in { color: var(--accent); }
 
@@ -297,14 +299,14 @@
     background: linear-gradient(135deg, var(--gold), var(--accent3));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  .weekly-sub { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+  .weekly-sub { font-size: 0.88rem; color: var(--muted); margin-top: 6px; }
 
   .qa-card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 16px; padding: 24px; margin-bottom: 12px;
   }
   .qa-q {
-    font-size: 0.95rem; margin-bottom: 16px; line-height: 1.5;
+    font-size: 1.05rem; margin-bottom: 16px; line-height: 1.5;
   }
   .qa-q span { color: var(--accent2); font-family: 'MaruMinya', sans-serif; }
   .qa-input-row { display: flex; gap: 8px; align-items: center; }
@@ -316,11 +318,11 @@
   }
   .qa-input:focus { border-color: var(--accent2); }
   .qa-input::placeholder { color: var(--muted); }
-  .qa-unit { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+  .qa-unit { color: var(--muted); font-size: 0.92rem; white-space: nowrap; }
   .qa-confirm {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none; border-radius: 10px; padding: 12px 20px;
-    color: #fff; font-family: 'MaruMinya', sans-serif; font-size: 0.9rem;
+    color: #fff; font-family: 'MaruMinya', sans-serif; font-size: 1rem;
     cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
   }
   .qa-confirm:hover { opacity: 0.85; }
@@ -334,7 +336,7 @@
     background: linear-gradient(90deg, var(--accent), var(--accent2));
     transition: width 0.5s ease;
   }
-  .progress-label { font-size: 0.72rem; color: var(--muted); margin-top: 6px; text-align: right; }
+  .progress-label { font-size: 0.78rem; color: var(--muted); margin-top: 6px; text-align: right; }
 
   .weekly-done {
     text-align: center; padding: 40px 20px; display: none;
@@ -348,7 +350,7 @@
     background: linear-gradient(135deg, var(--gold), var(--accent3));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  .done-sub { font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
+  .done-sub { font-size: 0.92rem; color: var(--muted); margin-top: 8px; }
 
   /* === INCOME/EXPENSE PAGE === */
   /* Toggle switch */
@@ -381,7 +383,7 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .entry-title.expense { background: linear-gradient(135deg, var(--danger), #DDBA7D);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .entry-sub { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+  .entry-sub { font-size: 0.88rem; color: var(--muted); margin-top: 6px; }
 
   .income-form {
     background: var(--surface); border: 1px solid var(--border);
@@ -391,7 +393,7 @@
   .income-form.expense-mode { border-color: rgba(207,75,0,0.3); }
 
   .form-row { margin-bottom: 16px; }
-  .form-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .form-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
   .form-input {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 16px; color: var(--text);
@@ -403,7 +405,7 @@
   .form-select {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 16px; color: var(--text);
-    font-family: 'MaruMinya', sans-serif; font-size: 0.95rem; outline: none;
+    font-family: 'MaruMinya', sans-serif; font-size: 1.05rem; outline: none;
     cursor: pointer;
   }
   .submit-btn {
@@ -423,7 +425,7 @@
     border-radius: 14px; padding: 16px; margin-top: 16px;
   }
   .auto-deduct-title {
-    font-size: 0.78rem; color: var(--danger); margin-bottom: 10px;
+    font-size: 0.85rem; color: var(--danger); margin-bottom: 10px;
     display: flex; align-items: center; gap: 6px;
   }
   .auto-deduct-row {
@@ -431,10 +433,10 @@
     border-bottom: 1px solid rgba(255,255,255,0.04);
   }
   .auto-deduct-row:last-child { border-bottom: none; }
-  .auto-deduct-name { flex: 1; font-size: 0.85rem; }
-  .auto-deduct-amt { font-family: 'MaruMinya', sans-serif; font-size: 0.85rem; color: var(--danger); }
+  .auto-deduct-name { flex: 1; font-size: 0.92rem; }
+  .auto-deduct-amt { font-family: 'MaruMinya', sans-serif; font-size: 0.92rem; color: var(--danger); }
   .auto-deduct-badge {
-    font-size: 0.65rem; padding: 2px 8px; border-radius: 8px; white-space: nowrap;
+    font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; white-space: nowrap;
   }
   .badge-auto { background: rgba(207,75,0,0.15); color: var(--danger); }
   .badge-manual { background: rgba(156,198,219,0.15); color: var(--accent); }
@@ -445,13 +447,13 @@
     display: flex; justify-content: space-between; align-items: center;
     margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
   }
-  .deduct-summary-label { font-size: 0.78rem; color: var(--muted); }
+  .deduct-summary-label { font-size: 0.85rem; color: var(--muted); }
   .deduct-summary-amt { font-family: 'MaruMinya', sans-serif; font-size: 1rem; color: var(--danger); }
   .confirm-deduct-btn {
     width: 100%; margin-top: 12px; padding: 12px;
     background: linear-gradient(135deg, var(--danger), #DDBA7D);
     border: none; border-radius: 10px; color: var(--bg);
-    font-family: 'MaruMinya', sans-serif; font-size: 0.95rem; cursor: pointer;
+    font-family: 'MaruMinya', sans-serif; font-size: 1.05rem; cursor: pointer;
   }
   .confirm-deduct-btn:hover { opacity: 0.85; }
 
@@ -470,11 +472,11 @@
   }
   .sms-icon { font-size: 1.5rem; }
   .sms-text { flex: 1; }
-  .sms-text strong { font-size: 0.88rem; display: block; margin-bottom: 2px; }
-  .sms-text span { font-size: 0.75rem; color: var(--muted); }
+  .sms-text strong { font-size: 0.95rem; display: block; margin-bottom: 2px; }
+  .sms-text span { font-size: 0.82rem; color: var(--muted); }
   .sms-badge {
     background: var(--accent2); color: #fff;
-    font-size: 0.7rem; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.78rem; padding: 3px 10px; border-radius: 20px;
     font-family: 'MaruMinya', sans-serif;
   }
 
@@ -491,7 +493,7 @@
   .bnav-btn {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     background: none; border: none; color: var(--muted);
-    font-family: 'MaruMinya', sans-serif; font-size: 0.62rem; cursor: pointer;
+    font-family: 'MaruMinya', sans-serif; font-size: 0.72rem; cursor: pointer;
     padding: 4px 16px; border-radius: 12px; transition: all 0.2s;
   }
   .bnav-btn.active { color: var(--accent); }
@@ -536,7 +538,7 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 6px;
   }
-  .player-select-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 20px; }
+  .player-select-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; }
 
   /* dual status bar */
   .dual-status {
@@ -568,11 +570,11 @@
   .ps-avatar {
     width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.8rem; font-family: 'MaruMinya', sans-serif;
+    font-size: 0.88rem; font-family: 'MaruMinya', sans-serif;
   }
   .ps-avatar.k { background: rgba(106,174,201,0.25); color: var(--accent2); }
   .ps-avatar.s { background: rgba(221,186,125,0.25); color: var(--gold); }
-  .ps-progress-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 5px; }
+  .ps-progress-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
   .ps-bar-wrap { background: var(--surface2); border-radius: 6px; height: 5px; }
   .ps-bar {
     height: 100%; border-radius: 6px; transition: width 0.4s ease;
@@ -580,7 +582,7 @@
   .ps-bar.k { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
   .ps-bar.s { background: linear-gradient(90deg, var(--gold), var(--accent3)); }
   .ps-status {
-    margin-top: 8px; font-size: 0.72rem;
+    margin-top: 8px; font-size: 0.78rem;
     display: flex; align-items: center; gap: 4px;
   }
   .ps-status .dot {
@@ -610,7 +612,7 @@
   .player-btn.done-btn { opacity: 0.45; cursor: default; }
   .player-btn.done-btn:hover { transform: none; }
   .player-btn .check-badge {
-    font-size: 0.75rem; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.82rem; padding: 2px 8px; border-radius: 10px;
     background: rgba(156,198,219,0.2); color: var(--accent);
   }
 
@@ -626,11 +628,11 @@
   .wph-avatar.k { background: rgba(106,174,201,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
   .wph-avatar.s { background: rgba(221,186,125,0.2); color: var(--gold); border: 2px solid var(--gold); }
   .wph-info-name { font-family: 'MaruMinya', sans-serif; font-size: 1rem; }
-  .wph-info-sub { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+  .wph-info-sub { font-size: 0.82rem; color: var(--muted); margin-top: 1px; }
   .back-to-select {
     margin-left: auto; background: none; border: 1px solid var(--border);
     border-radius: 8px; padding: 5px 12px; color: var(--muted);
-    font-size: 0.75rem; cursor: pointer; font-family: 'MaruMinya', sans-serif;
+    font-size: 0.82rem; cursor: pointer; font-family: 'MaruMinya', sans-serif;
   }
   .back-to-select:hover { border-color: var(--accent2); color: var(--text); }
 
@@ -642,7 +644,7 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 4px;
   }
-  .result-sub { text-align: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 20px; }
+  .result-sub { text-align: center; font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; }
 
   .result-vs {
     display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px;
@@ -670,7 +672,7 @@
   .rpc-balance { font-family: 'MaruMinya', sans-serif; font-size: 1.3rem; margin-bottom: 4px; }
   .rpc-balance.k { color: var(--accent2); }
   .rpc-balance.s { color: var(--gold); }
-  .rpc-change { font-size: 0.72rem; }
+  .rpc-change { font-size: 0.78rem; }
   .rpc-change.pos { color: var(--accent); }
   .rpc-change.neg { color: var(--danger); }
   .rpc-crown { font-size: 1.4rem; margin-bottom: 4px; }
@@ -688,15 +690,15 @@
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px 16px;
   }
-  .stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 10px; }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
   .stat-bar-row { display: flex; align-items: center; gap: 8px; }
-  .stat-name { font-size: 0.78rem; width: 36px; text-align: right; color: var(--muted); }
+  .stat-name { font-size: 0.85rem; width: 36px; text-align: right; color: var(--muted); }
   .stat-name.right { text-align: left; }
   .stat-bar-track { flex: 1; background: var(--surface2); border-radius: 6px; height: 8px; overflow: hidden; }
   .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
   .stat-bar-fill.k { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
   .stat-bar-fill.s { background: linear-gradient(90deg, var(--gold), var(--accent3)); }
-  .stat-val { font-size: 0.78rem; font-family: 'MaruMinya', sans-serif; }
+  .stat-val { font-size: 0.85rem; font-family: 'MaruMinya', sans-serif; }
   .stat-val.k { color: var(--accent2); }
   .stat-val.s { color: var(--gold); }
 
@@ -875,11 +877,11 @@
     <div class="section-title">초대코드 관리</div>
     <div id="inviteCodeCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <div>
-        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">현재 초대코드</div>
+        <div style="font-size: 0.78rem;color:var(--muted);margin-bottom:4px">현재 초대코드</div>
         <div id="inviteCodeCardDisplay" style="font-family:'Black Han Sans',sans-serif;font-size:1.5rem;letter-spacing:0.18em;color:var(--accent3)">——</div>
-        <div id="inviteCodeStatus" style="font-size:0.72rem;margin-top:3px;color:var(--accent)">● 활성</div>
+        <div id="inviteCodeStatus" style="font-size: 0.78rem;margin-top:3px;color:var(--accent)">● 활성</div>
       </div>
-      <button id="inviteCodeToggleBtn" onclick="toggleInviteCode()" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap;">비활성화</button>
+      <button id="inviteCodeToggleBtn" onclick="toggleInviteCode()" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;cursor:pointer;white-space:nowrap;">비활성화</button>
     </div>
   </div>
 
@@ -930,7 +932,7 @@
   <div id="page-txns" class="page">
     <div style="padding: 24px 0 16px;">
       <div style="font-family:'Black Han Sans',sans-serif; font-size:1.4rem;">거래 내역 📋</div>
-      <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">문자로 자동 수집된 내역</div>
+      <div style="font-size: 0.88rem; color:var(--muted); margin-top:4px;">문자로 자동 수집된 내역</div>
     </div>
     <div class="sms-banner">
       <div class="sms-icon">📱</div>
@@ -995,10 +997,10 @@
 <div class="modal-overlay" id="editBalanceModal" onclick="if(event.target===this)closeEditBalanceModal()">
   <div class="modal">
     <div class="modal-title">기초 자산 수정 <button class="modal-close" onclick="closeEditBalanceModal()">✕</button></div>
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:16px" id="editBalanceAccName"></div>
+    <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:16px" id="editBalanceAccName"></div>
     <div class="form-row">
       <div class="form-label">현재 잔액</div>
-      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:6px" id="editBalanceCurrent"></div>
+      <div style="font-size: 0.92rem;color:var(--muted);margin-bottom:6px" id="editBalanceCurrent"></div>
     </div>
     <div class="form-row">
       <div class="form-label">수정할 잔액</div>
@@ -1013,9 +1015,9 @@
       <input class="form-input" id="editBalanceMemo" placeholder="예: 실계좌 확인 후 조정" />
     </div>
     <button class="submit-income" onclick="saveEditedBalance()">저장</button>
-    <button onclick="confirmDeleteAccount()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(207,75,0,0.3);background:transparent;color:var(--danger);font-family:'Gowun Dodum',sans-serif;font-size:0.9rem;cursor:pointer;">자산 삭제</button>
+    <button onclick="confirmDeleteAccount()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(207,75,0,0.3);background:transparent;color:var(--danger);font-family:'Gowun Dodum',sans-serif;font-size: 1rem;cursor:pointer;">자산 삭제</button>
     <div id="deleteConfirmRow" style="display:none;margin-top:10px;background:rgba(207,75,0,0.07);border-radius:10px;padding:12px;text-align:center;">
-      <div style="font-size:0.82rem;color:var(--danger);margin-bottom:10px;">정말 삭제할까요? 되돌릴 수 없어요.</div>
+      <div style="font-size: 0.88rem;color:var(--danger);margin-bottom:10px;">정말 삭제할까요? 되돌릴 수 없어요.</div>
       <div style="display:flex;gap:8px;">
         <button onclick="document.getElementById('deleteConfirmRow').style.display='none'" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;cursor:pointer;">취소</button>
         <button onclick="deleteAccount()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--danger);color:#fff;font-family:'Black Han Sans',sans-serif;cursor:pointer;">삭제</button>
@@ -1045,12 +1047,12 @@
     <line x1="4" y1="60" x2="68" y2="60" stroke="#2e231a" stroke-width="2.2" stroke-linecap="round"/>
   </svg>
   <div style="font-family:'Black Han Sans',sans-serif;font-size:2.2rem;background:linear-gradient(135deg,#9CC6DB,#DDBA7D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">벌쓰</div>
-  <div style="font-size:0.75rem;color:var(--muted);letter-spacing:0.12em;margin-bottom:32px">VERSE BY 경우, 새롬</div>
+  <div style="font-size: 0.82rem;color:var(--muted);letter-spacing:0.12em;margin-bottom:32px">VERSE BY 경우, 새롬</div>
 
   <!-- STEP 1: 이름 선택 -->
   <div id="ob-step1" style="width:100%;max-width:360px">
     <div style="font-size:1rem;font-family:'Black Han Sans',sans-serif;margin-bottom:6px">나는 누구?</div>
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px">내 이름을 선택해요</div>
+    <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:20px">내 이름을 선택해요</div>
     <div style="display:flex;gap:12px">
       <button onclick="selectPlayer('경우')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(156,198,219,0.4);background:rgba(156,198,219,0.08);color:#9CC6DB;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">🧑 경우</button>
       <button onclick="selectPlayer('새롬')" style="flex:1;padding:18px;border-radius:14px;border:2px solid rgba(221,186,125,0.4);background:rgba(221,186,125,0.08);color:#DDBA7D;font-family:'Black Han Sans',sans-serif;font-size:1.1rem;cursor:pointer">👩 새롬</button>
@@ -1060,28 +1062,28 @@
   <!-- STEP 2: 가구 연결 -->
   <div id="ob-step2" style="width:100%;max-width:360px;display:none">
     <div style="font-size:1rem;font-family:'Black Han Sans',sans-serif;margin-bottom:6px" id="ob2-title">우리 가계 연결</div>
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px" id="ob2-desc">처음이면 새로 만들고, 상대방이 이미 만들었다면 코드로 참여해요</div>
+    <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:20px" id="ob2-desc">처음이면 새로 만들고, 상대방이 이미 만들었다면 코드로 참여해요</div>
 
     <!-- 첫 접속 옵션 -->
     <div id="ob-mode-new">
       <button onclick="createHousehold()" style="width:100%;padding:16px;border-radius:12px;border:none;background:linear-gradient(135deg,#6aaec9,#9CC6DB);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:1rem;cursor:pointer;margin-bottom:10px">✨ 새 가계 만들기</button>
       <div style="display:flex;gap:8px">
         <input id="ob-invite-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
-        <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(221,186,125,0.4);background:rgba(221,186,125,0.1);color:#DDBA7D;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">참여</button>
+        <button onclick="joinHousehold()" style="padding:12px 18px;border-radius:10px;border:1px solid rgba(221,186,125,0.4);background:rgba(221,186,125,0.1);color:#DDBA7D;font-family:'Black Han Sans',sans-serif;font-size: 1rem;cursor:pointer">참여</button>
       </div>
-      <button onclick="showReconnectMode()" style="width:100%;margin-top:16px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">↩ 이미 가계가 있어요 (기기 재접속)</button>
+      <button onclick="showReconnectMode()" style="width:100%;margin-top:16px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;cursor:pointer">↩ 이미 가계가 있어요 (기기 재접속)</button>
     </div>
 
     <!-- 재접속 옵션 -->
     <div id="ob-mode-reconnect" style="display:none">
       <div style="display:flex;gap:8px">
         <input id="ob-reconnect-input" placeholder="초대코드 6자리" maxlength="6" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:1rem;outline:none;letter-spacing:0.15em;text-align:center"/>
-        <button onclick="reconnectHousehold()" style="padding:12px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#6aaec9,#9CC6DB);color:#fff;font-family:'Black Han Sans',sans-serif;font-size:0.9rem;cursor:pointer">재접속</button>
+        <button onclick="reconnectHousehold()" style="padding:12px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#6aaec9,#9CC6DB);color:#fff;font-family:'Black Han Sans',sans-serif;font-size: 1rem;cursor:pointer">재접속</button>
       </div>
-      <button onclick="showNewMode()" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;cursor:pointer">← 돌아가기</button>
+      <button onclick="showNewMode()" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;cursor:pointer">← 돌아가기</button>
     </div>
 
-    <div id="ob-error" style="font-size:0.75rem;color:var(--danger);margin-top:8px;min-height:18px"></div>
+    <div id="ob-error" style="font-size: 0.82rem;color:var(--danger);margin-top:8px;min-height:18px"></div>
   </div>
 
   <!-- STEP 3: 로딩 -->
@@ -1098,9 +1100,9 @@
   padding:14px 20px;z-index:400;opacity:0;transition:all 0.3s;pointer-events:none;
   text-align:center;min-width:240px;
 ">
-  <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">상대방에게 알려줄 초대코드</div>
+  <div style="font-size: 0.78rem;color:var(--muted);margin-bottom:4px">상대방에게 알려줄 초대코드</div>
   <div id="inviteCodeDisplay" style="font-family:'Black Han Sans',sans-serif;font-size:1.8rem;letter-spacing:0.2em;color:var(--accent3)"></div>
-  <div style="font-size:0.68rem;color:var(--muted);margin-top:4px">탭해서 복사</div>
+  <div style="font-size: 0.75rem;color:var(--muted);margin-top:4px">탭해서 복사</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -1657,7 +1659,7 @@ function renderTxList(id) {
     <div class="tx-item">
       <div class="tx-emoji">${t.emoji}</div>
       <div class="tx-info">
-        <div class="tx-name">${t.name}${t.autoDeducted ? ' <span style="font-size:0.65rem;color:var(--muted);background:rgba(207,75,0,0.12);padding:1px 6px;border-radius:6px;">자동감지</span>' : ''}${t.isAdjust ? ' <span style="font-size:0.65rem;color:var(--accent2);background:rgba(26,111,163,0.1);padding:1px 6px;border-radius:6px;">기초자산수정</span>' : ''}</div>
+        <div class="tx-name">${t.name}${t.autoDeducted ? ' <span style="font-size: 0.75rem;color:var(--muted);background:rgba(207,75,0,0.12);padding:1px 6px;border-radius:6px;">자동감지</span>' : ''}${t.isAdjust ? ' <span style="font-size: 0.75rem;color:var(--accent2);background:rgba(26,111,163,0.1);padding:1px 6px;border-radius:6px;">기초자산수정</span>' : ''}</div>
         <div class="tx-meta">${t.meta}</div>
       </div>
       <div class="tx-amount ${t.type}">${t.type === 'out' ? '-' : '+'}${fmt(Math.abs(t.amount))}</div>
@@ -1844,7 +1846,7 @@ function renderWeeklySelect(container) {
         <div class="ps-bar-wrap"><div class="ps-bar ${cls}" style="width:${pct}%"></div></div>
         <div class="ps-status">
           <span class="dot ${dotClass}"></span>
-          <span style="color:var(--muted);font-size:0.72rem;">${dotLabel}</span>
+          <span style="color:var(--muted);font-size: 0.78rem;">${dotLabel}</span>
         </div>
       </div>`;
   };
@@ -1913,7 +1915,7 @@ function renderWeeklyQA(container, player) {
 
     <div class="qa-card player-${cls}">
       <div class="qa-q">Q. <span style="color:${cls === 'k' ? 'var(--accent2)' : 'var(--gold)'};font-family:'Black Han Sans',sans-serif;">${acc.bank} ${acc.name}</span>의 현재 잔액이 얼마예요?</div>
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">
+      <div style="font-size: 0.85rem;color:var(--muted);margin-bottom:12px;">
         📌 이전 기록: <strong style="color:${cls === 'k' ? 'var(--accent2)' : 'var(--gold)'}">${fmt(acc.prevBalance ?? acc.balance)}</strong>
       </div>
       <div class="qa-input-row">
@@ -1990,7 +1992,7 @@ function renderWeeklyResult(container) {
           <div class="rpc-name" style="color:var(--accent2)">경우</div>
           <div class="rpc-balance k">${fmt(kBal)}</div>
           ${changeStr(kChange)}
-          <div style="margin-top:8px;font-size:0.72rem;color:var(--muted)">${kScore}점</div>
+          <div style="margin-top:8px;font-size: 0.78rem;color:var(--muted)">${kScore}점</div>
         </div>
         <div class="vs-badge">VS</div>
         <div class="result-player-card s ${overallWinner === '새롬' ? 'winner' : ''}">
@@ -1999,7 +2001,7 @@ function renderWeeklyResult(container) {
           <div class="rpc-name" style="color:var(--gold)">새롬</div>
           <div class="rpc-balance s">${fmt(sBal)}</div>
           ${changeStr(sChange)}
-          <div style="margin-top:8px;font-size:0.72rem;color:var(--muted)">${sScore}점</div>
+          <div style="margin-top:8px;font-size: 0.78rem;color:var(--muted)">${sScore}점</div>
         </div>
       </div>
 
@@ -2017,8 +2019,8 @@ function renderWeeklyResult(container) {
             <span class="stat-name right" style="color:var(--gold)">${sSharePct}%</span>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px;">
-            <span style="font-size:0.7rem;color:var(--muted)">경우 ${fmt(kBal)}</span>
-            <span style="font-size:0.7rem;color:var(--muted)">${fmt(sBal)} 새롬</span>
+            <span style="font-size: 0.78rem;color:var(--muted)">경우 ${fmt(kBal)}</span>
+            <span style="font-size: 0.78rem;color:var(--muted)">${fmt(sBal)} 새롬</span>
           </div>
         </div>
 
@@ -2035,8 +2037,8 @@ function renderWeeklyResult(container) {
             <span class="stat-name right" style="color:var(--gold)">${sChange < 0 ? fmt(Math.abs(sChange)) : '-'}</span>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px;">
-            <span style="font-size:0.7rem;color:var(--muted)">경우</span>
-            <span style="font-size:0.7rem;color:var(--muted)">새롬</span>
+            <span style="font-size: 0.78rem;color:var(--muted)">경우</span>
+            <span style="font-size: 0.78rem;color:var(--muted)">새롬</span>
           </div>
         </div>
 
@@ -2045,13 +2047,13 @@ function renderWeeklyResult(container) {
           <div style="display:flex;gap:10px;margin-top:4px;">
             <div style="flex:1;text-align:center;padding:10px;background:var(--surface2);border-radius:10px;${speedWinner==='경우'?'border:1px solid var(--accent2)':''}">
               <div style="font-size:1.2rem">${speedWinner === '경우' ? '🥇' : '🥈'}</div>
-              <div style="font-size:0.78rem;font-family:'Black Han Sans',sans-serif;color:var(--accent2);margin-top:2px">경우</div>
-              <div style="font-size:0.65rem;color:var(--muted);margin-top:2px">${speedWinner==='경우'?'먼저 완료!':'나중 완료'}</div>
+              <div style="font-size: 0.85rem;font-family:'Black Han Sans',sans-serif;color:var(--accent2);margin-top:2px">경우</div>
+              <div style="font-size: 0.75rem;color:var(--muted);margin-top:2px">${speedWinner==='경우'?'먼저 완료!':'나중 완료'}</div>
             </div>
             <div style="flex:1;text-align:center;padding:10px;background:var(--surface2);border-radius:10px;${speedWinner==='새롬'?'border:1px solid var(--gold)':''}">
               <div style="font-size:1.2rem">${speedWinner === '새롬' ? '🥇' : '🥈'}</div>
-              <div style="font-size:0.78rem;font-family:'Black Han Sans',sans-serif;color:var(--gold);margin-top:2px">새롬</div>
-              <div style="font-size:0.65rem;color:var(--muted);margin-top:2px">${speedWinner==='새롬'?'먼저 완료!':'나중 완료'}</div>
+              <div style="font-size: 0.85rem;font-family:'Black Han Sans',sans-serif;color:var(--gold);margin-top:2px">새롬</div>
+              <div style="font-size: 0.75rem;color:var(--muted);margin-top:2px">${speedWinner==='새롬'?'먼저 완료!':'나중 완료'}</div>
             </div>
           </div>
         </div>
@@ -2117,7 +2119,7 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
         <span>${t.emoji}</span>
         <div class="auto-deduct-name">
           ${t.name}
-          <div style="font-size:0.65rem;color:var(--muted);margin-top:1px;">${tStr}</div>
+          <div style="font-size: 0.75rem;color:var(--muted);margin-top:1px;">${tStr}</div>
         </div>
         <span class="auto-deduct-badge badge-manual">직접입력</span>
         <span class="auto-deduct-amt">-${fmt(Math.abs(t.amount))}</span>
@@ -2130,12 +2132,12 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
       <span>${e.emoji}</span>
       <div class="auto-deduct-name">
         ${e.name}
-        <div style="font-size:0.65rem;color:var(--muted);margin-top:1px;">${nowStr} · 방금 추가</div>
+        <div style="font-size: 0.75rem;color:var(--muted);margin-top:1px;">${nowStr} · 방금 추가</div>
       </div>
       <span class="auto-deduct-badge badge-manual">직접입력</span>
       <span class="auto-deduct-amt">-${fmt(e.amount)}</span>
       <button onclick="removeModalExpense(${i}, ${accountIdx}, ${newBalance})"
-        style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;">✕</button>
+        style="background:none;border:none;color:var(--muted);cursor:pointer;font-size: 1rem;">✕</button>
     </div>`).join('');
 
   const autoRow = unaccounted > 0 ? `
@@ -2143,20 +2145,20 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
       <span>📊</span>
       <div class="auto-deduct-name">
         미분류 지출
-        <div style="font-size:0.65rem;color:var(--muted);margin-top:1px;">${nowStr} · 주간체크 자동감지</div>
+        <div style="font-size: 0.75rem;color:var(--muted);margin-top:1px;">${nowStr} · 주간체크 자동감지</div>
       </div>
       <span class="auto-deduct-badge badge-auto">자동감지</span>
       <span class="auto-deduct-amt">-${fmt(unaccounted)}</span>
       <input type="checkbox" class="auto-deduct-chk" id="autoChk" checked>
     </div>` : `
-    <div style="font-size:0.78rem;color:var(--accent);padding:8px 0;">✅ 모든 지출이 정리됐어요!</div>`;
+    <div style="font-size: 0.85rem;color:var(--accent);padding:8px 0;">✅ 모든 지출이 정리됐어요!</div>`;
 
   document.getElementById('autoDeductModal').innerHTML = `
     <div class="modal" style="max-height:88vh;overflow-y:auto;">
       <div class="modal-title">지출 자동 감지 📊
         <button class="modal-close" onclick="closeAutoModal()">✕</button>
       </div>
-      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
+      <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:14px;">
         <strong style="color:var(--accent2)">${acc.bank} ${acc.name}</strong> 잔액이
         <strong style="color:var(--danger)">-${fmt(totalDiff)}</strong> 줄었어요.
         직접 지출을 추가하거나, 미분류로 자동 등록할 수 있어요.
@@ -2173,9 +2175,9 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
 
       <!-- 지출 직접 추가 -->
       <div style="margin-top:14px;padding:14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);">
-        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;">➕ 지출 직접 추가</div>
+        <div style="font-size: 0.82rem;color:var(--muted);margin-bottom:10px;">➕ 지출 직접 추가</div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <select id="modalExpType" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;outline:none;">
+          <select id="modalExpType" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;outline:none;">
             <option value="food">🍽️ 식비</option>
             <option value="transport">⛽ 교통</option>
             <option value="shopping">🛒 쇼핑</option>
@@ -2184,13 +2186,13 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
             <option value="other_out">📦 기타</option>
           </select>
           <input id="modalExpMemo" type="text" placeholder="메모"
-            style="flex:1.2;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;outline:none;" />
+            style="flex:1.2;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;outline:none;" />
         </div>
         <div style="display:flex;gap:6px;">
           <input id="modalExpAmt" type="number" placeholder="금액 (원)"
-            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;outline:none;" />
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'Gowun Dodum',sans-serif;font-size: 0.88rem;outline:none;" />
           <button onclick="addModalExpense(${accountIdx}, ${newBalance})"
-            style="background:linear-gradient(135deg,var(--danger),#DDBA7D);border:none;border-radius:8px;padding:8px 16px;color:var(--bg);font-family:'Black Han Sans',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+            style="background:linear-gradient(135deg,var(--danger),#DDBA7D);border:none;border-radius:8px;padding:8px 16px;color:var(--bg);font-family:'Black Han Sans',sans-serif;font-size: 0.88rem;cursor:pointer;white-space:nowrap;">
             추가
           </button>
         </div>
