@@ -268,6 +268,18 @@
     background: rgba(200,144,10,0.15); color: var(--gold);
     font-size: 0.75rem; padding: 2px 7px; border-radius: 8px;
   }
+  .account-card.owner-k {
+    border-left: 4px solid var(--accent);
+    background: linear-gradient(135deg, rgba(129,145,47,0.04) 0%, var(--surface) 60%);
+  }
+  .account-card.owner-k .balance { color: var(--accent2); }
+  .account-card.owner-k:hover { border-color: var(--accent); }
+  .account-card.owner-s {
+    border-left: 4px solid var(--accent3);
+    background: linear-gradient(135deg, rgba(200,144,10,0.06) 0%, var(--surface) 60%);
+  }
+  .account-card.owner-s .balance { color: var(--accent3); }
+  .account-card.owner-s:hover { border-color: var(--accent3); }
   .account-card.add-card {
     border-style: dashed; background: transparent;
     display: flex; align-items: center; justify-content: center;
@@ -1652,9 +1664,10 @@ function renderAccounts() {
   grid.innerHTML = '';
   state.accounts.forEach(a => {
     const card = document.createElement('div');
-    card.className = 'account-card';
+    const ownerClass = a.owner === '경우' ? 'owner-k' : a.owner === '새롬' ? 'owner-s' : '';
+    card.className = 'account-card ' + ownerClass;
     card.innerHTML = `
-      <div class="bank">${a.bank} · ${a.owner}</div>
+      <div class="bank">${a.bank} · <span style="color:${a.owner === '경우' ? 'var(--accent)' : 'var(--accent3)'};font-weight:bold">${a.owner}</span></div>
       <div class="name">${a.name}</div>
       <div class="balance count-anim">${fmt(a.balance)}</div>
       <div class="rate-badge">연 ${a.rate}%</div>
