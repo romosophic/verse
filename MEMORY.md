@@ -22,7 +22,7 @@
 ## 데이터 구조 (state)
 ```
 state = {
-  accounts[],        // { id, bank, name, balance, rate, owner('경우'|'새롬'), prevBalance, _dbId }
+  accounts[],        // { id, bank, name, balance, rate, owner('경우'|'새롬'), prevBalance, accountNumber, _dbId }
   transactions[],    // { id, emoji, name, meta, amount, type('in'|'out'), ts, manual, autoDeducted, isAdjust }
   wealthHistory[],   // { date, val }
   weeklyProgress,    // { 경우: { done, checkedAt, totalBalance, prevTotal }, 새롬: ... }
@@ -34,7 +34,7 @@ state = {
 - `households`: `invite_code`, `invite_code_active` (boolean, 기본 true)
 - `users`: 사용자 (경우/새롬)
 - `household_members`: 가계-유저 연결
-- `accounts`: `bank`, `name`, `balance`, `prev_balance`, `rate`, `owner`, `is_active`
+- `accounts`: `bank`, `name`, `balance`, `prev_balance`, `rate`, `owner`, `is_active`, `account_number` (text, nullable)
 - `transactions`: `type`(in/out), `category`, `source`(manual/weekly_auto/balance_adjust), `is_manual`, `is_auto_deduct`
 - `snapshots`: 자산 추이 스냅샷
 
@@ -43,7 +43,14 @@ state = {
 - `weekly`: 주간 체크인 (경우/새롬 잔액 확인 + 경쟁)
 - `income`: 수입/지출 입력
 - `txns`: 전체 거래내역
-- `assets`: 자산 관리 (자산 현황 카드 + 초대코드 관리 — 접힘/펼침)
+- `assets`: 자산 관리 — 정렬 가능한 테이블(소유자/은행/계좌명/계좌번호/잔액/이율/수정), ＋추가 버튼(섹션 우상단), 초대코드 관리(접힘/펼침)
+
+## 자산 테이블 (assets 페이지)
+- 컬럼 헤더 클릭으로 오름/내림차순 정렬
+- 경우: 초록 왼쪽 보더 (`owner-k`), 새롬: 골드 왼쪽 보더 (`owner-s`)
+- ✏️ 아이콘 클릭 → `openEditBalanceModal(acc)` (수정/삭제 모달)
+- 계좌번호는 뒷 4자리만 표시 (`···1234`)
+- `editAccById(id)`: 테이블 행에서 수정 모달 여는 헬퍼
 
 ## 색상 토큰 (CSS vars)
 | 변수 | 용도 | 값 |
@@ -59,20 +66,31 @@ state = {
 ## 코드 컨벤션
 - 함수명: camelCase, 동사로 시작 (`bootApp`, `dbLoadAll`, `renderChart`)
 - DB 함수 접두사: `db` (e.g. `dbSaveTransaction`, `dbUpdateAccountBalance`)
-- 금액 표시: `fmt(n)` 유틸 사용 → `₩1,234,567`
+- 금액 표시: `fmt(n)` 유틸 → `₩1,234,567`
+- 금액 입력: `type="text" inputmode="numeric" oninput="fmtAmtInput(this)"` — **절대 `type="number"` 사용 금지**
+- 금액 읽기: `parseAmt('inputId')` — 쉼표 제거 후 파싱
+- 금액 세팅: `fmtRaw(n)` — 숫자를 쉼표 포맷 문자열로 변환
+- 이율 등 소수점 필드만 `type="number"` 유지
 - 섹션 구분자: `// ===== SECTION =====`
 
 ## 주요 함수
 - `bootApp()`: DB 로드 → 렌더링 시작
-- `showPage(id)`: 페이지 전환
-- `renderAccounts()`: 자산 카드 렌더 (클릭 시 수정/삭제 모달)
+- `showPage(id)`: 페이지 전환 (assets 시 `renderAccounts()` 호출)
+- `renderAccounts()`: 자산 테이블 렌더, `_accSort`로 정렬 상태 관리
+- `sortAccounts(col)`: 테이블 컬럼 정렬 토글
+- `editAccById(id)`: id로 계좌 찾아 수정 모달 열기
+- `openEditBalanceModal(acc)` / `saveEditedBalance()`: 잔액·이율·계좌번호 수정
+- `deleteAccount()`: 자산 삭제 (is_active = false)
 - `dbSaveTransaction()`: source 필드로 거래 구분 (balance_adjust = 기초자산수정)
 - `loadInviteStatus()` / `toggleInviteCode()`: 초대코드 활성/비활성 관리
-- `openEditBalanceModal(acc)` / `saveEditedBalance()`: 자산 잔액·이율 수정
-- `deleteAccount()`: 자산 삭제 (is_active = false)
+- `confirmQAUnchanged(accountIdx)`: 주간체크 잔액 변동 없음 즉시 확인
+- `fmtAmtInput(el)`: 금액 입력 필드 실시간 쉼표 포맷
+- `parseAmt(id)`: 쉼표 포함 문자열 → 숫자 파싱
+- `fmtRaw(n)`: 숫자 → 쉼표 포맷 문자열 (input value 세팅용)
 
 ## 하지 말 것
 - 별도 JS/CSS 파일로 분리 제안 금지 (단일 파일 구조가 의도된 설계)
 - 프레임워크(React 등) 도입 제안 금지
 - `state` 객체를 직접 외부에서 조작하지 말 것 — db 함수 통해 저장 후 state 갱신
 - 계좌 소유자 옵션에 '공동' 추가 금지 (경우/새롬만)
+- 금액 입력 필드에 `type="number"` 사용 금지 — 쉼표 포맷 깨짐
