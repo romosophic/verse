@@ -1705,6 +1705,7 @@ function renderAccounts() {
     { key: 'name',  label: '계좌명' },
     { key: 'balance', label: '잔액', num: true },
     { key: 'rate',  label: '이율', num: true },
+    { key: null,    label: '', noSort: true },
   ];
 
   const sorted = [...state.accounts].sort((a, b) => {
@@ -1714,6 +1715,7 @@ function renderAccounts() {
   });
 
   const thead = cols.map(c => {
+    if (c.noSort) return `<th style="width:36px"></th>`;
     const active = _accSort.col === c.key;
     const arrow = active ? (_accSort.dir === 1 ? '▲' : '▼') : '▲';
     return `<th class="${active ? 'sorted' : ''} ${c.num ? 'col-num' : ''}" onclick="sortAccounts('${c.key}')">${c.label}<span class="sort-icon">${arrow}</span></th>`;
@@ -1723,12 +1725,13 @@ function renderAccounts() {
     const ok = a.owner === '경우';
     const rowClass = ok ? 'owner-k' : 'owner-s';
     const oc = ok ? 'k' : 's';
-    return `<tr class="${rowClass}" onclick="openEditBalanceModal(state.accounts.find(x=>x.id===${a.id}))">
+    return `<tr class="${rowClass}">
       <td><span class="col-owner ${oc}">${a.owner}</span></td>
       <td>${a.bank}</td>
       <td>${a.name}</td>
       <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
+      <td style="text-align:center;padding:0 8px"><button onclick="openEditBalanceModal(state.accounts.find(x=>x.id===${a.id}))" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
     </tr>`;
   }).join('');
 
