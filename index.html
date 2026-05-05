@@ -967,6 +967,14 @@
       <input class="form-input" id="newAccName" placeholder="급여통장" />
     </div>
     <div class="form-row">
+      <div class="form-label">소유자</div>
+      <select class="form-input" id="newOwner" style="cursor:pointer;">
+        <option value="경우">경우</option>
+        <option value="새롬">새롬</option>
+        <option value="공동">공동</option>
+      </select>
+    </div>
+    <div class="form-row">
       <div class="form-label">현재 잔액</div>
       <input class="form-input" type="number" id="newBalance" placeholder="5000000" />
     </div>
@@ -2425,7 +2433,7 @@ async function addAccount() {
   const name = document.getElementById('newAccName').value.trim() || '계좌';
   const balance = parseFloat(document.getElementById('newBalance').value) || 0;
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
-  const owner = session.playerName || '경우';
+  const owner = document.getElementById('newOwner').value;
 
   const newAcc = { id: Date.now(), bank, name, balance, rate, owner, prevBalance: balance };
   state.accounts.push(newAcc);
