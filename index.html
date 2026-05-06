@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>벌쓰 — 벌고쓰는 우리의 서사</title>
+<link rel="icon" type="image/png" href="./logo.png">
 <style>
   @font-face {
     font-family: 'MaruMinya';
@@ -793,38 +794,7 @@
 
 <nav>
   <div class="nav-logo" onclick="openBrandPopup()">
-    <!-- 우상향 차트 SVG 로고 -->
-    <div class="logo-svg-wrap">
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-        <defs>
-          <linearGradient id="chartGrad" x1="0" y1="0" x2="32" y2="0">
-            <stop offset="0%" stop-color="#9CC6DB"/>
-            <stop offset="100%" stop-color="var(--accent2)"/>
-          </linearGradient>
-          <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#9CC6DB" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#9CC6DB" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <!-- fill area under chart line -->
-        <path d="M3 24 L3 21 L8 17 L13 18.5 L19 13 L26 8 L29 6 L29 24 Z"
-              fill="url(#fillGrad)"/>
-        <!-- chart line -->
-        <polyline points="3,21 8,17 13,18.5 19,13 26,8 29,6"
-                  stroke="url(#chartGrad)" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <!-- dots -->
-        <circle cx="3"  cy="21"   r="1.6" fill="#9CC6DB"/>
-        <circle cx="13" cy="18.5" r="1.6" fill="#9CC6DB" opacity="0.7"/>
-        <circle cx="19" cy="13"   r="1.6" fill="var(--accent2)" opacity="0.8"/>
-        <circle cx="29" cy="6"    r="2"   fill="var(--accent2)"/>
-        <!-- upward arrow tip -->
-        <polyline points="26,4.5 29,1.5 32,4.5"
-                  stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <!-- x-axis baseline -->
-        <line x1="2" y1="26" x2="30" y2="26" stroke="#E0D8C4" stroke-width="1.2" stroke-linecap="round"/>
-      </svg>
-    </div>
+    <img src="./logo.png" alt="벌쓰 로고" class="logo-svg-wrap" style="object-fit: contain;">
     <div>
       <div class="nav-brand">벌쓰</div>
       <div class="nav-brand-sub">VERSE BY 경우, 새롬</div>
