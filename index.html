@@ -574,6 +574,9 @@
     .bottom-nav { display: flex; }
     .accounts-grid { grid-template-columns: 1fr 1fr; }
     .wealth-amount { font-size: 2rem; }
+    #accountsGrid { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .accounts-table { font-size: 0.75rem; min-width: 600px; }
+    .accounts-table th, .accounts-table td { padding: 6px 8px; }
   }
 
   /* MODAL */
@@ -1055,7 +1058,7 @@
 <div class="modal-overlay" id="editBalanceModal" onclick="if(event.target===this)closeEditBalanceModal()">
   <div class="modal">
     <div class="modal-title">기초 자산 수정 <button class="modal-close" onclick="closeEditBalanceModal()">✕</button></div>
-    <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:16px" id="editBalanceAccName"></div>
+    <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:16px" id="editBalanceAccInfo"></div>
     <div class="form-row">
       <div class="form-label">현재 잔액</div>
       <div style="font-size: 0.92rem;color:var(--muted);margin-bottom:6px" id="editBalanceCurrent"></div>
@@ -1063,6 +1066,14 @@
     <div class="form-row">
       <div class="form-label">수정할 잔액</div>
       <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="editBalanceInput" placeholder="0" />
+    </div>
+    <div class="form-row">
+      <div class="form-label">은행/증권사</div>
+      <input class="form-input" id="editBalanceBank" placeholder="KB국민은행" />
+    </div>
+    <div class="form-row">
+      <div class="form-label">계좌 별명</div>
+      <input class="form-input" id="editBalanceAccName" placeholder="급여통장" />
     </div>
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
@@ -2560,9 +2571,11 @@ function closeModal() {
 let _editingAcc = null;
 function openEditBalanceModal(acc) {
   _editingAcc = acc;
-  document.getElementById('editBalanceAccName').textContent = `${acc.bank} · ${acc.name} (${acc.owner})`;
+  document.getElementById('editBalanceAccInfo').textContent = `${acc.bank} · ${acc.name} (${acc.owner})`;
   document.getElementById('editBalanceCurrent').textContent = `현재: ${fmt(acc.balance)}`;
   document.getElementById('editBalanceInput').value = fmtRaw(acc.balance);
+  document.getElementById('editBalanceBank').value = acc.bank || '';
+  document.getElementById('editBalanceAccName').value = acc.name || '';
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
   document.getElementById('editBalanceMemo').value = '';
@@ -2591,21 +2604,27 @@ async function saveEditedBalance() {
   if (!_editingAcc) return;
   const newBal = parseAmt('editBalanceInput');
   const newRate = parseFloat(document.getElementById('editBalanceRate').value);
+  const newBank = document.getElementById('editBalanceBank').value.trim();
+  const newName = document.getElementById('editBalanceAccName').value.trim();
   if (isNaN(newBal)) return;
   const memo = document.getElementById('editBalanceMemo').value.trim() || '기초 자산 수정';
   const diff = newBal - _editingAcc.balance;
   const rateChanged = !isNaN(newRate) && newRate !== _editingAcc.rate;
+  const bankChanged = newBank && newBank !== _editingAcc.bank;
+  const nameChanged = newName && newName !== _editingAcc.name;
 
-  if (diff === 0 && !rateChanged) { closeEditBalanceModal(); return; }
+  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged) { closeEditBalanceModal(); return; }
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
+  if (newBank) _editingAcc.bank = newBank;
+  if (newName) _editingAcc.name = newName;
   _editingAcc.balance = newBal;
   _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, updated_at: new Date().toISOString() })
+      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
