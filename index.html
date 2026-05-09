@@ -1992,10 +1992,11 @@ function renderWeeklySelect(container) {
     const isMe = session.playerName === p;
 
     let btnHtml = '';
+    const bgColor = cls === 'k' ? 'var(--accent)' : 'var(--accent3)';
     if (done) {
       btnHtml = `<button class="player-btn ${cls} done-btn" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;">수정하기 ✎</button>`;
     } else if (isMe) {
-      btnHtml = `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;background:var(--${cls === 'k' ? 'accent' : 'accent3'});color:#fff;border:none;">체크 시작</button>`;
+      btnHtml = `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;background:${bgColor};color:#fff;border:none;">체크 시작</button>`;
     } else {
       btnHtml = `<button class="player-btn ${cls}" disabled style="opacity:0.35;cursor:not-allowed;margin-top:12px;width:100%;">대기중...</button>`;
     }
