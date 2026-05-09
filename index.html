@@ -2004,13 +2004,15 @@ function renderWeeklySelect(container) {
 
   const makeBtn = (p) => {
     const done = prog[p].done;
+    const isMe = session.playerName === p;
     const cls = p === '경우' ? 'kyungwoo' : 'saerom';
-    const btnCls = done ? 'done-btn' : '';
-    const label = done
-      ? `${PLAYER_EMOJI[p]} ${p} <span class="check-badge">완료 ✓</span>`
-      : `${PLAYER_EMOJI[p]} ${p} 체크 시작`;
-    const onclick = done ? '' : `onclick="startPlayerCheck('${p}')"`;
-    return `<button class="player-btn ${cls} ${btnCls}" ${onclick}>${label}</button>`;
+    if (done) {
+      return `<button class="player-btn ${cls} done-btn">${PLAYER_EMOJI[p]} ${p} <span class="check-badge">완료 ✓</span></button>`;
+    }
+    if (!isMe) {
+      return `<button class="player-btn ${cls}" disabled style="opacity:0.35;cursor:not-allowed;">${PLAYER_EMOJI[p]} ${p} 체크 시작</button>`;
+    }
+    return `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')">${PLAYER_EMOJI[p]} ${p} 체크 시작</button>`;
   };
 
   const fmtTs = ts => {
