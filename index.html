@@ -1380,7 +1380,7 @@ async function dbLoadAll() {
   const [accsRes, txsRes, snapRes, weekRes] = await Promise.all([
     sb.from('accounts').select('*').eq('household_id', hid).eq('is_active', true).order('created_at'),
     sb.from('transactions').select('*').eq('household_id', hid).order('transacted_at', { ascending: false }).limit(100),
-    sb.from('wealth_snapshots').select('*').eq('household_id', hid).order('snapshot_date').limit(30),
+    sb.from('wealth_snapshots').select('*').eq('household_id', hid).order('snapshot_date').limit(365),
     sb.from('weekly_checks').select('*').eq('household_id', hid).eq('week_start', getWeekStart()).maybeSingle(),
   ]);
 
@@ -1426,6 +1426,7 @@ async function dbLoadAll() {
     state.wealthHistory = snapRes.data.map(s => ({
       date: new Date(s.snapshot_date).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}),
       val: s.total_balance,
+      ts: new Date(s.snapshot_date).getTime(),
     }));
   } else {
     initWealthHistory();
@@ -1631,12 +1632,15 @@ function initWealthHistory() {
   const now = new Date();
   const base = totalBalance();
   state.wealthHistory = [];
-  for (let i = 29; i >= 0; i--) {
+  for (let i = 364; i >= 0; i--) {
     const d = new Date(now); d.setDate(d.getDate() - i);
     const noise = (Math.random() - 0.3) * 800000;
+    const dayNumber = 364 - i;
+    const trend = (dayNumber / 364) * base * 0.15;
     state.wealthHistory.push({
       date: d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-      val: Math.max(0, base - i * 150000 + noise)
+      val: Math.max(0, base * 0.6 + trend + noise),
+      ts: d.getTime()
     });
   }
   state.wealthHistory[state.wealthHistory.length - 1].val = base;
@@ -1647,22 +1651,20 @@ let chartInstance = null;
 function renderChart(period = '1M') {
   let data = state.wealthHistory;
   const base = totalBalance();
+  const now = Date.now();
+
   if (period === '3M') {
-    data = Array.from({length: 90}, (_, i) => ({
-      date: `${i+1}일`,
-      val: Math.max(0, base - (89-i)*150000 + (Math.random()-0.3)*1200000)
-    }));
+    const cutoff = now - 90*24*60*60*1000;
+    data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
+    if (!data.length) data = [{date: '오늘', val: base}];
   } else if (period === '6M') {
-    data = Array.from({length: 24}, (_, i) => ({
-      date: `${i+1}주`,
-      val: Math.max(0, base - (23-i)*350000 + (Math.random()-0.3)*2000000)
-    }));
+    const cutoff = now - 180*24*60*60*1000;
+    data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
+    if (!data.length) data = [{date: '오늘', val: base}];
   } else if (period === '1Y') {
-    const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-    data = months.map((m, i) => ({
-      date: m,
-      val: Math.max(0, base - (11-i)*1200000 + (Math.random()-0.3)*3000000)
-    }));
+    const cutoff = now - 365*24*60*60*1000;
+    data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
+    if (!data.length) data = [{date: '오늘', val: base}];
   }
   const ctx = document.getElementById('wealthChart').getContext('2d');
   if (chartInstance) chartInstance.destroy();
@@ -1987,6 +1989,17 @@ function renderWeeklySelect(container) {
     const pct = total ? Math.round(steps / total * 100) : 0;
     const dotClass = done ? 'dot-done' : 'dot-waiting';
     const dotLabel = done ? '✅ 완료' : '대기중';
+    const isMe = session.playerName === p;
+
+    let btnHtml = '';
+    if (done) {
+      btnHtml = `<button class="player-btn ${cls} done-btn" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;">수정하기 ✎</button>`;
+    } else if (isMe) {
+      btnHtml = `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;background:var(--${cls === 'k' ? 'accent' : 'accent3'});color:#fff;border:none;">체크 시작</button>`;
+    } else {
+      btnHtml = `<button class="player-btn ${cls}" disabled style="opacity:0.35;cursor:not-allowed;margin-top:12px;width:100%;">대기중...</button>`;
+    }
+
     return `
       <div class="player-status-card ${p === '경우' ? 'kyungwoo' : 'saerom'} ${done ? 'done-turn' : ''}">
         <div class="ps-name">
@@ -1999,20 +2012,8 @@ function renderWeeklySelect(container) {
           <span class="dot ${dotClass}"></span>
           <span style="color:var(--muted);font-size: 0.78rem;">${dotLabel}</span>
         </div>
+        ${btnHtml}
       </div>`;
-  };
-
-  const makeBtn = (p) => {
-    const done = prog[p].done;
-    const isMe = session.playerName === p;
-    const cls = p === '경우' ? 'kyungwoo' : 'saerom';
-    if (done) {
-      return `<button class="player-btn ${cls} done-btn">${PLAYER_EMOJI[p]} ${p} <span class="check-badge">완료 ✓</span></button>`;
-    }
-    if (!isMe) {
-      return `<button class="player-btn ${cls}" disabled style="opacity:0.35;cursor:not-allowed;">${PLAYER_EMOJI[p]} ${p} 체크 시작</button>`;
-    }
-    return `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')">${PLAYER_EMOJI[p]} ${p} 체크 시작</button>`;
   };
 
   const fmtTs = ts => {
@@ -2042,8 +2043,6 @@ function renderWeeklySelect(container) {
       <div class="player-select-title">주간 잔액 체크 💬</div>
     </div>
     <div class="dual-status">${makeCard('경우')}${makeCard('새롬')}</div>
-    ${makeBtn('경우')}
-    ${makeBtn('새롬')}
 
     <div class="lc-section-title">마지막 체크 내역</div>
     <div class="lc-panels">
@@ -2246,12 +2245,19 @@ function renderWeeklyResult(container) {
         </div>
       </div>
 
+      <button class="result-next-btn" style="margin-bottom:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);" onclick="backToEdit()">✎ 수정하기</button>
       <button class="result-next-btn" onclick="resetWeeklyAndRefresh()">🔄 다음 주 체크 준비</button>
     </div>
   `;
 
   // celebration
   spawnCoins(60);
+}
+
+function backToEdit() {
+  state.weeklyPlayer = null;
+  state.weeklyStep = 0;
+  renderWeekly();
 }
 
 function resetWeeklyAndRefresh() {
