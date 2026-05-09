@@ -556,7 +556,7 @@
     position: fixed; bottom: 0; left: 0; right: 0;
     background: rgba(30,26,14,0.95); backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
-    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    padding: 8px max(20px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     z-index: 100;
     justify-content: space-around;
   }
@@ -806,11 +806,11 @@
   </div>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('dashboard')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">1</span>대시보드</button>
-    <button class="nav-tab" onclick="showPage('weekly')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">2</span>주간체크</button>
-    <button class="nav-tab" onclick="showPage('income')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">3</span>수입/지출</button>
-    <button class="nav-tab" onclick="showPage('txns')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">4</span>거래내역</button>
-    <button class="nav-tab" onclick="showPage('assets')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">5</span>자산 관리</button>
+    <button class="nav-tab active" data-page="dashboard" onclick="showPage('dashboard')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">1</span>대시보드</button>
+    <button class="nav-tab" data-page="weekly" onclick="showPage('weekly')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">2</span>주간체크</button>
+    <button class="nav-tab" data-page="income" onclick="showPage('income')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">3</span>수입/지출</button>
+    <button class="nav-tab" data-page="txns" onclick="showPage('txns')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">4</span>거래내역</button>
+    <button class="nav-tab" data-page="assets" onclick="showPage('assets')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">5</span>자산 관리</button>
   </div>
   <div class="nav-user" style="display:none"></div>
 </nav>
@@ -1002,21 +1002,10 @@
 
 <!-- BOTTOM NAV (mobile) -->
 <div class="bottom-nav">
-  <button class="bnav-btn active" onclick="showPage('dashboard')">
-    <span class="icon">📊</span>대시보드
-  </button>
-  <button class="bnav-btn" onclick="showPage('weekly')">
-    <span class="icon">✅</span>주간체크
-  </button>
-  <button class="bnav-btn" onclick="showPage('income')">
-    <span class="icon">💸</span>수입/지출
-  </button>
-  <button class="bnav-btn" onclick="showPage('txns')">
-    <span class="icon">📋</span>거래
-  </button>
-  <button class="bnav-btn" onclick="showPage('assets')">
-    <span class="icon">🏦</span>자산
-  </button>
+  <button class="bnav-btn active" data-page="dashboard" onclick="showPage('dashboard')">홈</button>
+  <button class="bnav-btn" data-page="weekly" onclick="showPage('weekly')">위클리</button>
+  <button class="bnav-btn" data-page="income" onclick="showPage('income')">벌쓰</button>
+  <button class="bnav-btn" data-page="assets" onclick="showPage('assets')">자산</button>
 </div>
 
 <!-- MODAL: 계좌추가 -->
@@ -2678,11 +2667,8 @@ function showPage(id) {
   document.querySelectorAll('.bnav-btn').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
 
-  const tabs = ['dashboard','weekly','income','txns','assets'];
-  const navTabs = document.querySelectorAll('.nav-tab');
-  const bTabs = document.querySelectorAll('.bnav-btn');
-  const idx = tabs.indexOf(id);
-  if (idx >= 0) { navTabs[idx]?.classList.add('active'); bTabs[idx]?.classList.add('active'); }
+  document.querySelector(`.nav-tab[data-page="${id}"]`)?.classList.add('active');
+  document.querySelector(`.bnav-btn[data-page="${id}"]`)?.classList.add('active');
 
   if (id === 'assets') renderAccounts();
 
