@@ -644,9 +644,11 @@
     width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.88rem; font-family: 'MaruMinya', sans-serif;
+    background-size: cover; background-position: center;
+    border: 2px solid var(--border);
   }
-  .ps-avatar.k { background: rgba(106,174,201,0.25); color: var(--accent2); }
-  .ps-avatar.s { background: rgba(200,144,10,0.25); color: var(--gold); }
+  .ps-avatar.k { border-color: var(--accent2); }
+  .ps-avatar.s { border-color: var(--gold); }
   .ps-progress-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
   .ps-bar-wrap { background: var(--surface2); border-radius: 6px; height: 5px; }
   .ps-bar {
@@ -697,9 +699,10 @@
     width: 38px; height: 38px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-family: 'MaruMinya', sans-serif; font-size: 1rem;
+    background-size: cover; background-position: center;
   }
-  .wph-avatar.k { background: rgba(106,174,201,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
-  .wph-avatar.s { background: rgba(221,186,125,0.2); color: var(--gold); border: 2px solid var(--gold); }
+  .wph-avatar.k { border: 2px solid var(--accent2); }
+  .wph-avatar.s { border: 2px solid var(--gold); }
   .wph-info-name { font-family: 'MaruMinya', sans-serif; font-size: 1rem; }
   .wph-info-sub { font-size: 0.82rem; color: var(--muted); margin-top: 1px; }
   .back-to-select {
@@ -740,7 +743,7 @@
   }
   .result-player-card.winner.k { border-color: var(--accent2); }
   .result-player-card.winner.s { border-color: var(--gold); }
-  .rpc-avatar { font-size: 2rem; margin-bottom: 6px; }
+  .rpc-avatar { font-size: 2rem; margin-bottom: 6px; width: 80px; height: 80px; border-radius: 50%; background-size: cover; background-position: center; display: inline-block; }
   .rpc-name { font-family: 'MaruMinya', sans-serif; font-size: 1rem; margin-bottom: 10px; }
   .rpc-balance { font-family: 'MaruMinya', sans-serif; font-size: 1.3rem; margin-bottom: 4px; }
   .rpc-balance.k { color: var(--accent2); }
@@ -1929,6 +1932,7 @@ function submitEntry() {
 const PLAYERS = ['경우', '새롬'];
 const PLAYER_CLASS = { '경우': 'k', '새롬': 's' };
 const PLAYER_EMOJI = { '경우': '🧑', '새롬': '👩' };
+const PLAYER_PROFILE = { '경우': 'https://cdn.it.chosun.com/news/photo/202007/2020073004214_2.png', '새롬': 'https://dinopixel.com/preload/0221/Princess-Daisy.webp' };
 
 function playerAccounts(player) {
   // '공동' 계좌는 경우 턴에 포함
@@ -2004,7 +2008,7 @@ function renderWeeklySelect(container) {
     return `
       <div class="player-status-card ${p === '경우' ? 'kyungwoo' : 'saerom'} ${done ? 'done-turn' : ''}">
         <div class="ps-name">
-          <div class="ps-avatar ${cls}">${p[0]}</div>
+          <div class="ps-avatar ${cls}" style="background-image:url('${PLAYER_PROFILE[p]}')"></div>
           ${p}
         </div>
         <div class="ps-progress-label">${steps}/${total} 계좌 완료</div>
@@ -2091,7 +2095,7 @@ function renderWeeklyQA(container, player) {
 
   container.innerHTML = `
     <div class="weekly-player-header">
-      <div class="wph-avatar ${cls}">${player[0]}</div>
+      <div class="wph-avatar ${cls}" style="background-image:url('${PLAYER_PROFILE[player]}')"></div>
       <div>
         <div class="wph-info-name">${player}의 체크</div>
         <div class="wph-info-sub">${step + 1} / ${accs.length} 계좌</div>
@@ -2175,7 +2179,7 @@ function renderWeeklyResult(container) {
       <div class="result-vs">
         <div class="result-player-card k ${overallWinner === '경우' ? 'winner' : ''}">
           ${overallWinner === '경우' ? '<div class="rpc-crown">👑</div>' : '<div style="height:30px"></div>'}
-          <div class="rpc-avatar">${PLAYER_EMOJI['경우']}</div>
+          <div class="rpc-avatar" style="background-image:url('${PLAYER_PROFILE['경우']}')"></div>
           <div class="rpc-name" style="color:var(--accent2)">경우</div>
           <div class="rpc-balance k">${fmt(kBal)}</div>
           ${changeStr(kChange)}
@@ -2184,7 +2188,7 @@ function renderWeeklyResult(container) {
         <div class="vs-badge">VS</div>
         <div class="result-player-card s ${overallWinner === '새롬' ? 'winner' : ''}">
           ${overallWinner === '새롬' ? '<div class="rpc-crown">👑</div>' : '<div style="height:30px"></div>'}
-          <div class="rpc-avatar">${PLAYER_EMOJI['새롬']}</div>
+          <div class="rpc-avatar" style="background-image:url('${PLAYER_PROFILE['새롬']}')"></div>
           <div class="rpc-name" style="color:var(--gold)">새롬</div>
           <div class="rpc-balance s">${fmt(sBal)}</div>
           ${changeStr(sChange)}
