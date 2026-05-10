@@ -408,6 +408,35 @@
   }
   .progress-label { font-size: 0.78rem; color: var(--muted); margin-top: 6px; text-align: right; }
 
+  .qa-completed-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2); border-radius: 12px; padding: 12px 14px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .qa-completed-item:hover {
+    background: var(--border); opacity: 0.9;
+  }
+  .qa-completed-item:active { opacity: 0.8; }
+  .qa-completed-check {
+    font-size: 1.1rem; color: var(--accent);
+    flex-shrink: 0;
+  }
+  .qa-completed-info {
+    flex: 1; min-width: 0;
+  }
+  .qa-completed-name {
+    font-size: 0.92rem; color: var(--text); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .qa-completed-balance {
+    font-size: 0.78rem; color: var(--muted); margin-top: 2px;
+  }
+  .qa-completed-change {
+    font-size: 0.85rem; font-weight: 500; white-space: nowrap;
+  }
+  .qa-completed-change.pos { color: var(--income); }
+  .qa-completed-change.neg { color: var(--danger); }
+
   .weekly-done {
     text-align: center; padding: 40px 20px; display: none;
   }
@@ -2093,6 +2122,32 @@ function renderWeeklyQA(container, player) {
   const acc = accs[step];
   const pct = Math.round(step / accs.length * 100);
 
+  // 이미 처리한 계좌들
+  const completedHtml = accs.slice(0, step).map((a, idx) => {
+    const change = a.balance - (a.prevBalance ?? a.balance);
+    const changeClass = change >= 0 ? 'pos' : 'neg';
+    const changeStr = change >= 0 ? `▲ +${fmt(change)}` : `▼ ${fmt(change)}`;
+    return `
+      <div class="qa-completed-item" onclick="editCompletedQA(${idx})">
+        <div class="qa-completed-check">✓</div>
+        <div class="qa-completed-info">
+          <div class="qa-completed-name">${a.bank} ${a.name}</div>
+          <div class="qa-completed-balance">${fmt(a.balance)}</div>
+        </div>
+        <div class="qa-completed-change ${changeClass}">${changeStr}</div>
+      </div>
+    `;
+  }).join('');
+
+  const completedSection = step > 0 ? `
+    <div style="margin-top:20px;">
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:10px;padding:0 16px;">✅ 처리 완료</div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:0 16px;">
+        ${completedHtml}
+      </div>
+    </div>
+  ` : '';
+
   container.innerHTML = `
     <div class="weekly-player-header">
       <div class="wph-avatar ${cls}" style="background-image:url('${PLAYER_PROFILE[player]}')"></div>
@@ -2120,6 +2175,8 @@ function renderWeeklyQA(container, player) {
       <div class="progress-bar" style="width:${pct}%;background:${cls === 'k' ? 'linear-gradient(90deg,var(--accent2),var(--accent))' : 'linear-gradient(90deg,var(--gold),var(--accent3))'}"></div>
     </div>
     <div class="progress-label">${step} / ${accs.length} 완료</div>
+
+    ${completedSection}
   `;
   setTimeout(() => document.getElementById('qaInput')?.focus(), 80);
 }
@@ -2127,6 +2184,11 @@ function renderWeeklyQA(container, player) {
 function backToSelect() {
   state.weeklyPlayer = null;
   state.weeklyStep = 0;
+  renderWeekly();
+}
+
+function editCompletedQA(accountIdx) {
+  state.weeklyStep = accountIdx;
   renderWeekly();
 }
 
