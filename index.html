@@ -167,14 +167,15 @@
     color: var(--text);
   }
   .nav-user { font-size: 0.88rem; color: var(--muted); }
-  .nav-logout {
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .nav-btn {
     padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
     background: transparent; color: var(--muted);
     font-family: 'MaruMinya', sans-serif;
     font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
     white-space: nowrap;
   }
-  .nav-logout:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
 
   /* MAIN */
   main {
@@ -852,7 +853,10 @@
     <button class="nav-tab" data-page="txns" onclick="showPage('txns')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">4</span>거래내역</button>
     <button class="nav-tab" data-page="assets" onclick="showPage('assets')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">5</span>자산 관리</button>
   </div>
-  <button class="nav-logout" onclick="logoutHousehold()" title="로그아웃">로그아웃</button>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openInviteCodeModal()" title="접속코드 조회">접속코드</button>
+    <button class="nav-btn" onclick="logoutHousehold()" title="로그아웃">로그아웃</button>
+  </div>
 </nav>
 
 <!-- BRAND POPUP -->
@@ -1130,6 +1134,18 @@
 
 <!-- MODAL: 자동감지 지출 -->
 <div class="modal-overlay" id="autoDeductModal"></div>
+
+<!-- MODAL: 접속코드 조회 -->
+<div class="modal-overlay" id="inviteCodeModal">
+  <div class="modal">
+    <div class="modal-title">접속코드 <button class="modal-close" onclick="closeInviteCodeModal()">✕</button></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;">
+      <div id="navInviteCodeDisplay" style="font-family:'MaruMinya',sans-serif;font-size:1.8rem;letter-spacing:0.2em;color:var(--accent3)">——</div>
+      <div id="navInviteCodeStatus" style="font-size:0.82rem;margin-top:8px;color:var(--accent)"></div>
+    </div>
+    <button onclick="copyNavInviteCode(this)" style="margin-top:16px;width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'MaruMinya',sans-serif;font-size:0.9rem;cursor:pointer;">코드 복사</button>
+  </div>
+</div>
 
 <!-- ONBOARDING SCREEN -->
 <div id="onboardingScreen" style="
@@ -2782,6 +2798,34 @@ function logoutHousehold() {
   location.reload();
 }
 
+async function openInviteCodeModal() {
+  document.getElementById('inviteCodeModal').classList.add('open');
+  document.getElementById('navInviteCodeDisplay').textContent = '——';
+  document.getElementById('navInviteCodeStatus').textContent = '불러오는 중...';
+  if (!sb || !session.householdId) return;
+  try {
+    const { data: hh } = await sb.from('households').select('invite_code, invite_code_active').eq('id', session.householdId).single();
+    if (!hh) throw new Error('not found');
+    document.getElementById('navInviteCodeDisplay').textContent = hh.invite_code || '——';
+    const active = hh.invite_code_active !== false;
+    document.getElementById('navInviteCodeStatus').textContent = active ? '● 활성' : '○ 비활성';
+    document.getElementById('navInviteCodeStatus').style.color = active ? 'var(--accent)' : 'var(--muted)';
+  } catch (e) {
+    document.getElementById('navInviteCodeStatus').textContent = '불러오지 못했어요';
+  }
+}
+function closeInviteCodeModal() {
+  document.getElementById('inviteCodeModal').classList.remove('open');
+}
+function copyNavInviteCode(btn) {
+  const code = document.getElementById('navInviteCodeDisplay').textContent;
+  if (!code || code === '——') return;
+  navigator.clipboard.writeText(code);
+  const original = btn.textContent;
+  btn.textContent = '복사됨!';
+  setTimeout(() => btn.textContent = original, 1200);
+}
+
 // ===== INIT =====
 (async function init() {
   // onboarding은 기본 표시 상태 — 세션 있으면 숨김
@@ -2812,6 +2856,9 @@ document.getElementById('addAccountModal').addEventListener('click', e => {
 });
 document.getElementById('autoDeductModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeAutoModal();
+});
+document.getElementById('inviteCodeModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeInviteCodeModal();
 });
 
 const _pageKeys = { '1': 'dashboard', '2': 'weekly', '3': 'income', '4': 'txns', '5': 'assets' };
