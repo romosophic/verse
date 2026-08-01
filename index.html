@@ -167,6 +167,14 @@
     color: var(--text);
   }
   .nav-user { font-size: 0.88rem; color: var(--muted); }
+  .nav-logout {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'MaruMinya', sans-serif;
+    font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-logout:hover { background: var(--surface2); color: var(--text); }
 
   /* MAIN */
   main {
@@ -844,7 +852,7 @@
     <button class="nav-tab" data-page="txns" onclick="showPage('txns')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">4</span>거래내역</button>
     <button class="nav-tab" data-page="assets" onclick="showPage('assets')"><span style="opacity:0.5;font-size:0.75em;margin-right:3px">5</span>자산 관리</button>
   </div>
-  <div class="nav-user" style="display:none"></div>
+  <button class="nav-logout" onclick="logoutHousehold()" title="로그아웃">로그아웃</button>
 </nav>
 
 <!-- BRAND POPUP -->
@@ -2766,6 +2774,12 @@ function closeBrandPopup(e) {
   if (!e || e.target === document.getElementById('brandPopup')) {
     document.getElementById('brandPopup').classList.remove('open');
   }
+}
+
+function logoutHousehold() {
+  if (!confirm('로그아웃 하시겠어요?')) return;
+  localStorage.removeItem('bulseu_session');
+  location.reload();
 }
 
 // ===== INIT =====
