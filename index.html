@@ -957,13 +957,6 @@
       </div>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-header">
-        <span class="chart-title">🥧 자산별 비중</span>
-      </div>
-      <canvas id="assetPieChart" height="220"></canvas>
-      <div id="assetPieEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">등록된 자산이 없어요</div>
-    </div>
   </div>
 
   <!-- WEEKLY CHECK -->
@@ -1079,12 +1072,8 @@
       </select>
     </div>
     <div class="form-row">
-      <div class="form-label">가용 분류</div>
-      <select class="form-input" id="newLiquidity" style="cursor:pointer;">
-        <option value="가용 쉬움">가용 쉬움</option>
-        <option value="가용 어려움">가용 어려움</option>
-        <option value="가용 불가">가용 불가</option>
-      </select>
+      <div class="form-label">가용 시점 (비워두면 즉시 가용)</div>
+      <input class="form-input" type="date" id="newAvailableFrom" style="cursor:pointer;" />
     </div>
     <div class="form-row">
       <div class="form-label">현재 잔액</div>
@@ -1124,12 +1113,8 @@
       <input class="form-input" id="editBalanceAccName" placeholder="급여통장" />
     </div>
     <div class="form-row">
-      <div class="form-label">가용 분류</div>
-      <select class="form-input" id="editBalanceLiquidity" style="cursor:pointer;">
-        <option value="가용 쉬움">가용 쉬움</option>
-        <option value="가용 어려움">가용 어려움</option>
-        <option value="가용 불가">가용 불가</option>
-      </select>
+      <div class="form-label">가용 시점 (비워두면 즉시 가용)</div>
+      <input class="form-input" type="date" id="editBalanceAvailableFrom" style="cursor:pointer;" />
     </div>
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
@@ -1459,7 +1444,7 @@ async function dbLoadAll() {
   const [accsRes, txsRes, weekHistRes, weekRes] = await Promise.all([
     sb.from('accounts').select('*').eq('household_id', hid).eq('is_active', true).order('created_at'),
     sb.from('transactions').select('*').eq('household_id', hid).order('transacted_at', { ascending: false }).limit(100),
-    sb.from('weekly_checks').select('week_start, kyungwoo_balance, saerom_balance').eq('household_id', hid).order('week_start').limit(104),
+    sb.from('weekly_checks').select('week_start, kyungwoo_available_balance, kyungwoo_unavailable_balance, saerom_available_balance, saerom_unavailable_balance').eq('household_id', hid).order('week_start').limit(104),
     sb.from('weekly_checks').select('*').eq('household_id', hid).eq('week_start', getWeekStart()).maybeSingle(),
   ]);
 
@@ -1470,7 +1455,7 @@ async function dbLoadAll() {
     rate: parseFloat(a.rate), owner: a.owner,
     accountNumber: a.account_number || '',
     lastCheckedAt: a.last_checked_at || null,
-    liquidity: a.liquidity || '가용 쉬움',
+    availableFrom: a.available_from || null,
     _dbId: a.id,
   }));
 
@@ -1506,12 +1491,17 @@ async function dbLoadAll() {
 }
 
 function applyWeeklyWealthHistory(rows) {
-  const withBalance = (rows || []).filter(w => w.kyungwoo_balance != null || w.saerom_balance != null);
+  const withBalance = (rows || []).filter(w =>
+    w.kyungwoo_available_balance != null || w.kyungwoo_unavailable_balance != null ||
+    w.saerom_available_balance != null || w.saerom_unavailable_balance != null
+  );
   if (withBalance.length) {
     state.wealthHistory = withBalance.map(w => ({
       date: new Date(w.week_start).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}),
-      kyungwoo: w.kyungwoo_balance || 0,
-      saerom: w.saerom_balance || 0,
+      kyungwooAvailable: w.kyungwoo_available_balance || 0,
+      kyungwooUnavailable: w.kyungwoo_unavailable_balance || 0,
+      saeromAvailable: w.saerom_available_balance || 0,
+      saeromUnavailable: w.saerom_unavailable_balance || 0,
       ts: new Date(w.week_start).getTime(),
     }));
   } else {
@@ -1521,7 +1511,7 @@ function applyWeeklyWealthHistory(rows) {
 
 async function loadWeeklyWealthHistory() {
   const { data } = await sb.from('weekly_checks')
-    .select('week_start, kyungwoo_balance, saerom_balance')
+    .select('week_start, kyungwoo_available_balance, kyungwoo_unavailable_balance, saerom_available_balance, saerom_unavailable_balance')
     .eq('household_id', session.householdId)
     .order('week_start')
     .limit(104);
@@ -1562,7 +1552,7 @@ async function dbSaveAccount(acc) {
     balance: acc.balance, prev_balance: acc.balance,
     rate: acc.rate, is_active: true,
     account_number: acc.accountNumber || null,
-    liquidity: acc.liquidity || '가용 쉬움',
+    available_from: acc.availableFrom || null,
   }).select().single();
   if (error) { console.error('account insert error', error); return null; }
   return data;
@@ -1581,12 +1571,14 @@ async function dbSaveWeeklyCheck(player, balance) {
 }
 
 // 플레이어가 이번 주 계좌 체크를 전부 마쳤을 때 총 자산을 주간 히스토리로 저장
-async function dbSaveWeeklyTotalBalance(player, total) {
+async function dbSaveWeeklyTotalBalance(player, available, unavailable) {
   const weekStart = getWeekStart();
   const { data: wc } = await sb.from('weekly_checks')
     .upsert({ household_id: session.householdId, week_start: weekStart }, { onConflict: 'household_id,week_start' })
     .select().single();
-  const field = player === '경우' ? { kyungwoo_balance: total } : { saerom_balance: total };
+  const field = player === '경우'
+    ? { kyungwoo_available_balance: available, kyungwoo_unavailable_balance: unavailable }
+    : { saerom_available_balance: available, saerom_unavailable_balance: unavailable };
   await sb.from('weekly_checks').update(field).eq('id', wc.id);
   await loadWeeklyWealthHistory();
   renderChart();
@@ -1619,10 +1611,10 @@ function subscribeRealtime() {
   sb.channel('bulseu-' + session.householdId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts',
         filter: `household_id=eq.${session.householdId}` },
-      async () => { await dbLoadAll(); renderAccounts(); renderAssetPie(); renderTxList('allTxList'); renderChart(); })
+      async () => { await dbLoadAll(); renderAccounts(); renderTxList('allTxList'); renderChart(); })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transactions',
         filter: `household_id=eq.${session.householdId}` },
-      async () => { await dbLoadAll(); renderAssetPie(); renderTxList('allTxList'); })
+      async () => { await dbLoadAll(); renderTxList('allTxList'); })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'weekly_checks',
         filter: `household_id=eq.${session.householdId}` },
       () => { if (document.getElementById('page-weekly').classList.contains('active')) renderWeekly(); })
@@ -1647,7 +1639,6 @@ async function bootApp() {
   initWeekly();
   renderChart('1M');
   renderAccounts();
-  renderAssetPie();
   renderTxList('allTxList');
   startInterestTicker();
   setMode('income');
@@ -1717,6 +1708,9 @@ let state = {
 function totalBalance() {
   return state.accounts.reduce((s, a) => s + a.balance, 0);
 }
+function isAccountAvailable(acc, asOf = new Date().toISOString().slice(0,10)) {
+  return !acc.availableFrom || acc.availableFrom <= asOf;
+}
 function totalRate() {
   const total = totalBalance();
   if (!total) return 0;
@@ -1779,17 +1773,30 @@ function renderChart(period = '1M') {
       labels: data.map(d => d.date),
       datasets: [
         {
-          label: '경우',
-          data: data.map(d => toManwon(d.kyungwoo)),
+          label: '경우 가용',
+          data: data.map(d => toManwon(d.kyungwooAvailable)),
           backgroundColor: '#81912F',
           stack: 'wealth',
-          borderRadius: { topLeft: 0, topRight: 0 },
           borderSkipped: false,
         },
         {
-          label: '새롬',
-          data: data.map(d => toManwon(d.saerom)),
+          label: '경우 비가용',
+          data: data.map(d => toManwon(d.kyungwooUnavailable)),
+          backgroundColor: 'rgba(129,145,47,0.35)',
+          stack: 'wealth',
+          borderSkipped: false,
+        },
+        {
+          label: '새롬 가용',
+          data: data.map(d => toManwon(d.saeromAvailable)),
           backgroundColor: '#C8900A',
+          stack: 'wealth',
+          borderSkipped: false,
+        },
+        {
+          label: '새롬 비가용',
+          data: data.map(d => toManwon(d.saeromUnavailable)),
+          backgroundColor: 'rgba(200,144,10,0.35)',
           stack: 'wealth',
           borderRadius: { topLeft: 4, topRight: 4 },
           borderSkipped: false,
@@ -1802,7 +1809,7 @@ function renderChart(period = '1M') {
       plugins: {
         legend: {
           display: true, position: 'top', align: 'end',
-          labels: { color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' }
+          labels: { color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 10 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' }
         },
         tooltip: {
           backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
@@ -1838,66 +1845,6 @@ function setPeriod(btn, p) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderChart(p);
-}
-
-// ===== ASSET PIE (가용 분류별 비중 · 경우+새롬 합산) =====
-const LIQUIDITY_LEVELS = ['가용 쉬움', '가용 어려움', '가용 불가'];
-const LIQUIDITY_COLORS = { '가용 쉬움': '#81912F', '가용 어려움': '#C8900A', '가용 불가': '#7A7260' };
-let assetPieInstance = null;
-function renderAssetPie() {
-  const canvas = document.getElementById('assetPieChart');
-  const emptyState = document.getElementById('assetPieEmpty');
-  const slices = LIQUIDITY_LEVELS
-    .map(level => ({
-      label: level,
-      value: state.accounts.filter(a => (a.liquidity || '가용 쉬움') === level).reduce((s, a) => s + a.balance, 0)
-    }))
-    .filter(s => s.value > 0);
-
-  if (!slices.length) {
-    if (assetPieInstance) { assetPieInstance.destroy(); assetPieInstance = null; }
-    canvas.style.display = 'none';
-    emptyState.style.display = 'block';
-    return;
-  }
-  canvas.style.display = '';
-  emptyState.style.display = 'none';
-
-  const total = slices.reduce((s, x) => s + x.value, 0);
-  const ctx = canvas.getContext('2d');
-  if (assetPieInstance) assetPieInstance.destroy();
-  assetPieInstance = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: slices.map(s => s.label),
-      datasets: [{
-        data: slices.map(s => s.value),
-        backgroundColor: slices.map(s => LIQUIDITY_COLORS[s.label]),
-        borderColor: '#FFFFFF',
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          display: true, position: 'bottom',
-          labels: { color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle', padding: 12 }
-        },
-        tooltip: {
-          backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
-          titleColor: '#9b9080', bodyColor: '#9CC6DB',
-          bodyFont: { family: 'Black Han Sans', size: 13 },
-          callbacks: {
-            label: ctx => {
-              const pct = total ? (ctx.parsed / total * 100).toFixed(1) : 0;
-              return `${ctx.label}  ${fmt(ctx.parsed)} (${pct}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
 }
 
 // ===== INTEREST TICKER =====
@@ -1946,7 +1893,7 @@ function renderAccounts() {
     { key: 'accountNumber', label: '계좌번호' },
     { key: 'balance', label: '잔액', num: true },
     { key: 'rate',  label: '이율', num: true },
-    { key: 'liquidity', label: '가용 분류' },
+    { key: 'availableFrom', label: '가용 시점' },
     { key: null,    label: '', noSort: true },
   ];
 
@@ -1974,7 +1921,12 @@ function renderAccounts() {
       <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
       <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
-      <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:${LIQUIDITY_COLORS[a.liquidity || '가용 쉬움']}"></span>${a.liquidity || '가용 쉬움'}</span></td>
+      <td>${(() => {
+        const avail = isAccountAvailable(a);
+        const color = avail ? '#81912F' : '#7A7260';
+        const label = a.availableFrom ? `${a.availableFrom}${avail ? '' : ' (대기)'}` : '즉시 가용';
+        return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:${color}"></span>${label}</span>`;
+      })()}</td>
       <td style="text-align:center;padding:0 8px"><button onclick="editAccById('${a.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
     </tr>`;
   }).join('');
@@ -2106,7 +2058,6 @@ function submitEntry() {
   }
 
   renderAccounts();
-  renderAssetPie();
   renderTxList('allTxList');
 
   setTimeout(() => showPage('dashboard'), 1000);
@@ -2261,13 +2212,15 @@ function renderWeeklyQA(container, player) {
   if (step >= accs.length) {
     // player done
     const total = accs.reduce((s, a) => s + a.balance, 0);
+    const available = accs.filter(a => isAccountAvailable(a)).reduce((s, a) => s + a.balance, 0);
+    const unavailable = total - available;
     state.weeklyProgress[player].done = true;
     state.weeklyProgress[player].checkedAt = Date.now();
     state.weeklyProgress[player].totalBalance = total;
     state.weeklyProgress[player].steps = accs.length;
     state.weeklyPlayer = null;
 
-    if (session.householdId) dbSaveWeeklyTotalBalance(player, total).catch(console.error);
+    if (session.householdId) dbSaveWeeklyTotalBalance(player, available, unavailable).catch(console.error);
 
     const both = state.weeklyProgress['경우'].done && state.weeklyProgress['새롬'].done;
     if (both) state.lastWeeklyTs = Date.now();
@@ -2722,7 +2675,6 @@ function applyQABalance(accountIdx, newBalance) {
 
   renderWeekly();
   renderAccounts();
-  renderAssetPie();
   renderTxList('allTxList');
 }
 
@@ -2795,7 +2747,7 @@ function openEditBalanceModal(acc) {
   document.getElementById('editBalanceInput').value = fmtRaw(acc.balance);
   document.getElementById('editBalanceBank').value = acc.bank || '';
   document.getElementById('editBalanceAccName').value = acc.name || '';
-  document.getElementById('editBalanceLiquidity').value = acc.liquidity || '가용 쉬움';
+  document.getElementById('editBalanceAvailableFrom').value = acc.availableFrom || '';
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
   document.getElementById('editBalanceMemo').value = '';
@@ -2816,7 +2768,6 @@ async function deleteAccount() {
     await sb.from('accounts').update({ is_active: false }).eq('id', _editingAcc._dbId || _editingAcc.id);
   }
   renderAccounts();
-  renderAssetPie();
   renderTxList('allTxList');
   closeEditBalanceModal();
 }
@@ -2826,28 +2777,28 @@ async function saveEditedBalance() {
   const newRate = parseFloat(document.getElementById('editBalanceRate').value);
   const newBank = document.getElementById('editBalanceBank').value.trim();
   const newName = document.getElementById('editBalanceAccName').value.trim();
-  const newLiquidity = document.getElementById('editBalanceLiquidity').value;
+  const newAvailableFrom = document.getElementById('editBalanceAvailableFrom').value || null;
   if (isNaN(newBal)) return;
   const memo = document.getElementById('editBalanceMemo').value.trim() || '기초 자산 수정';
   const diff = newBal - _editingAcc.balance;
   const rateChanged = !isNaN(newRate) && newRate !== _editingAcc.rate;
   const bankChanged = newBank && newBank !== _editingAcc.bank;
   const nameChanged = newName && newName !== _editingAcc.name;
-  const liquidityChanged = newLiquidity !== (_editingAcc.liquidity || '가용 쉬움');
+  const availableFromChanged = newAvailableFrom !== (_editingAcc.availableFrom || null);
 
-  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged && !liquidityChanged) { closeEditBalanceModal(); return; }
+  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged && !availableFromChanged) { closeEditBalanceModal(); return; }
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
   if (newBank) _editingAcc.bank = newBank;
   if (newName) _editingAcc.name = newName;
-  _editingAcc.liquidity = newLiquidity;
+  _editingAcc.availableFrom = newAvailableFrom;
   _editingAcc.balance = newBal;
   _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, liquidity: _editingAcc.liquidity, updated_at: new Date().toISOString() })
+      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, available_from: _editingAcc.availableFrom, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
@@ -2868,7 +2819,6 @@ async function saveEditedBalance() {
   }
 
   renderAccounts();
-  renderAssetPie();
   renderTxList('allTxList');
   closeEditBalanceModal();
 }
@@ -2878,10 +2828,10 @@ async function addAccount() {
   const balance = parseAmt('newBalance') || 0;
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
   const owner = document.getElementById('newOwner').value;
-  const liquidity = document.getElementById('newLiquidity').value;
+  const availableFrom = document.getElementById('newAvailableFrom').value || null;
   const accountNumber = document.getElementById('newAccNumber').value.trim();
 
-  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, liquidity, accountNumber, prevBalance: balance };
+  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, availableFrom, accountNumber, prevBalance: balance };
   state.accounts.push(newAcc);
 
   if (session.householdId) {
@@ -2891,7 +2841,6 @@ async function addAccount() {
 
   closeModal();
   renderAccounts();
-  renderAssetPie();
 }
 
 // ===== PAGE NAV =====
