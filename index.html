@@ -1434,10 +1434,10 @@ function hideInviteToast() {
 async function dbLoadAll() {
   const hid = session.householdId;
 
-  const [accsRes, txsRes, snapRes, weekRes] = await Promise.all([
+  const [accsRes, txsRes, weekHistRes, weekRes] = await Promise.all([
     sb.from('accounts').select('*').eq('household_id', hid).eq('is_active', true).order('created_at'),
     sb.from('transactions').select('*').eq('household_id', hid).order('transacted_at', { ascending: false }).limit(100),
-    sb.from('wealth_snapshots').select('*').eq('household_id', hid).order('snapshot_date').limit(365),
+    sb.from('weekly_checks').select('week_start, kyungwoo_balance, saerom_balance').eq('household_id', hid).order('week_start').limit(104),
     sb.from('weekly_checks').select('*').eq('household_id', hid).eq('week_start', getWeekStart()).maybeSingle(),
   ]);
 
@@ -1478,16 +1478,31 @@ async function dbLoadAll() {
     _dbId: t.id,
   }));
 
-  // wealth history from snapshots
-  if (snapRes.data?.length) {
-    state.wealthHistory = snapRes.data.map(s => ({
-      date: new Date(s.snapshot_date).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}),
-      val: s.total_balance,
-      ts: new Date(s.snapshot_date).getTime(),
+  // wealth history from weekly checks (경우/새롬 구분)
+  applyWeeklyWealthHistory(weekHistRes.data);
+}
+
+function applyWeeklyWealthHistory(rows) {
+  const withBalance = (rows || []).filter(w => w.kyungwoo_balance != null || w.saerom_balance != null);
+  if (withBalance.length) {
+    state.wealthHistory = withBalance.map(w => ({
+      date: new Date(w.week_start).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}),
+      kyungwoo: w.kyungwoo_balance || 0,
+      saerom: w.saerom_balance || 0,
+      ts: new Date(w.week_start).getTime(),
     }));
   } else {
     initWealthHistory();
   }
+}
+
+async function loadWeeklyWealthHistory() {
+  const { data } = await sb.from('weekly_checks')
+    .select('week_start, kyungwoo_balance, saerom_balance')
+    .eq('household_id', session.householdId)
+    .order('week_start')
+    .limit(104);
+  applyWeeklyWealthHistory(data);
 }
 
 async function dbSaveTransaction(tx, accountId) {
@@ -1539,6 +1554,18 @@ async function dbSaveWeeklyCheck(player, balance) {
   const field = player === '경우' ? { kyungwoo_done: true, kyungwoo_checked_at: new Date().toISOString() }
                                   : { saerom_done: true, saerom_checked_at: new Date().toISOString() };
   await sb.from('weekly_checks').update(field).eq('id', wc.id);
+}
+
+// 플레이어가 이번 주 계좌 체크를 전부 마쳤을 때 총 자산을 주간 히스토리로 저장
+async function dbSaveWeeklyTotalBalance(player, total) {
+  const weekStart = getWeekStart();
+  const { data: wc } = await sb.from('weekly_checks')
+    .upsert({ household_id: session.householdId, week_start: weekStart }, { onConflict: 'household_id,week_start' })
+    .select().single();
+  const field = player === '경우' ? { kyungwoo_balance: total } : { saerom_balance: total };
+  await sb.from('weekly_checks').update(field).eq('id', wc.id);
+  await loadWeeklyWealthHistory();
+  renderChart();
 }
 
 async function dbSaveSnapshot() {
@@ -1685,79 +1712,114 @@ function weeklyManualExpenses() {
 }
 
 // ===== INIT =====
+function currentWealthSplit() {
+  const kyungwoo = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동').reduce((s,a) => s+a.balance, 0);
+  const saerom = state.accounts.filter(a => a.owner === '새롬').reduce((s,a) => s+a.balance, 0);
+  return { kyungwoo, saerom };
+}
+
 function initWealthHistory() {
   const now = new Date();
-  const base = totalBalance();
+  const { kyungwoo, saerom } = currentWealthSplit();
   state.wealthHistory = [];
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i);
-    const noise = (Math.random() - 0.3) * 800000;
-    const dayNumber = 364 - i;
-    const trend = (dayNumber / 364) * base * 0.15;
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i * 7);
+    const noise = 1 + (Math.random() - 0.5) * 0.1;
+    const weekNumber = 11 - i;
+    const trend = 0.85 + (weekNumber / 11) * 0.15;
     state.wealthHistory.push({
       date: d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-      val: Math.max(0, base * 0.6 + trend + noise),
+      kyungwoo: Math.max(0, kyungwoo * trend * noise),
+      saerom: Math.max(0, saerom * trend * noise),
       ts: d.getTime()
     });
   }
-  state.wealthHistory[state.wealthHistory.length - 1].val = base;
+  state.wealthHistory[state.wealthHistory.length - 1].kyungwoo = kyungwoo;
+  state.wealthHistory[state.wealthHistory.length - 1].saerom = saerom;
 }
 
-// ===== CHART =====
+// ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
 let chartInstance = null;
 function renderChart(period = '1M') {
   let data = state.wealthHistory;
-  const base = totalBalance();
   const now = Date.now();
 
   if (period === '3M') {
     const cutoff = now - 90*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
-    if (!data.length) data = [{date: '오늘', val: base}];
   } else if (period === '6M') {
     const cutoff = now - 180*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
-    if (!data.length) data = [{date: '오늘', val: base}];
   } else if (period === '1Y') {
     const cutoff = now - 365*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
-    if (!data.length) data = [{date: '오늘', val: base}];
+  } else {
+    const cutoff = now - 30*24*60*60*1000;
+    data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
   }
+  if (!data.length) {
+    const { kyungwoo, saerom } = currentWealthSplit();
+    data = [{ date: '이번 주', kyungwoo, saerom }];
+  }
+
+  const toManwon = v => Math.round(v / 10000);
   const ctx = document.getElementById('wealthChart').getContext('2d');
   if (chartInstance) chartInstance.destroy();
-  const grad = ctx.createLinearGradient(0, 0, 0, 180);
-  grad.addColorStop(0, 'rgba(156,198,219,0.25)');
-  grad.addColorStop(1, 'rgba(156,198,219,0)');
   chartInstance = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: data.map(d => d.date),
-      datasets: [{
-        data: data.map(d => d.val),
-        borderColor: '#9CC6DB', borderWidth: 2.5,
-        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#9CC6DB',
-        fill: true, backgroundColor: grad, tension: 0.4,
-      }]
+      datasets: [
+        {
+          label: '경우',
+          data: data.map(d => toManwon(d.kyungwoo)),
+          backgroundColor: '#81912F',
+          stack: 'wealth',
+          borderRadius: { topLeft: 0, topRight: 0 },
+          borderSkipped: false,
+        },
+        {
+          label: '새롬',
+          data: data.map(d => toManwon(d.saerom)),
+          backgroundColor: '#C8900A',
+          stack: 'wealth',
+          borderRadius: { topLeft: 4, topRight: 4 },
+          borderSkipped: false,
+        },
+      ]
     },
     options: {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true, position: 'top', align: 'end',
+          labels: { color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 11 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' }
+        },
         tooltip: {
           backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
           titleColor: '#9b9080', bodyColor: '#9CC6DB',
-          bodyFont: { family: 'Black Han Sans', size: 14 },
-          callbacks: { label: ctx => fmt(ctx.parsed.y) }
+          bodyFont: { family: 'Black Han Sans', size: 13 },
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}  ${ctx.parsed.y.toLocaleString()}만원`,
+            footer: items => {
+              const total = items.reduce((s, it) => s + it.parsed.y, 0);
+              return `합계  ${total.toLocaleString()}만원`;
+            }
+          }
         }
       },
       scales: {
-        x: { grid: { color: 'rgba(30,26,14,0.1)' }, ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 8 }, border: { display: false } },
+        x: {
+          stacked: true,
+          grid: { display: false },
+          ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 8 },
+          border: { display: false }
+        },
         y: {
+          stacked: true,
           grid: { color: 'rgba(30,26,14,0.1)' },
-          ticks: { color: '#7a7060', font: { size: 10 },
-            callback: v => v >= 1e8 ? (v/1e8).toFixed(0)+'억' : v >= 1e4 ? (v/1e4).toFixed(0)+'만' : v
-          },
+          ticks: { color: '#7a7060', font: { size: 10 }, callback: v => v.toLocaleString() + '만' },
           border: { display: false }
         }
       }
@@ -1976,8 +2038,6 @@ function submitEntry() {
   renderAccounts();
   renderTxList('recentTxList');
   renderTxList('allTxList');
-  initWealthHistory();
-  renderChart();
 
   setTimeout(() => showPage('dashboard'), 1000);
 }
@@ -2136,6 +2196,8 @@ function renderWeeklyQA(container, player) {
     state.weeklyProgress[player].totalBalance = total;
     state.weeklyProgress[player].steps = accs.length;
     state.weeklyPlayer = null;
+
+    if (session.householdId) dbSaveWeeklyTotalBalance(player, total).catch(console.error);
 
     const both = state.weeklyProgress['경우'].done && state.weeklyProgress['새롬'].done;
     if (both) state.lastWeeklyTs = Date.now();
@@ -2592,8 +2654,6 @@ function applyQABalance(accountIdx, newBalance) {
   renderAccounts();
   renderTxList('recentTxList');
   renderTxList('allTxList');
-  initWealthHistory();
-  renderChart();
 }
 
 
@@ -2756,8 +2816,6 @@ async function addAccount() {
 
   closeModal();
   renderAccounts();
-  initWealthHistory();
-  renderChart();
 }
 
 // ===== PAGE NAV =====
