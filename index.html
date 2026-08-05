@@ -939,6 +939,7 @@
         </div>
       </div>
       <canvas id="wealthChart" height="180"></canvas>
+      <div id="wealthChartEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">아직 기록된 위클리 데이터가 없어요</div>
     </div>
 
     <div class="interest-ticker">
@@ -1712,30 +1713,8 @@ function weeklyManualExpenses() {
 }
 
 // ===== INIT =====
-function currentWealthSplit() {
-  const kyungwoo = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동').reduce((s,a) => s+a.balance, 0);
-  const saerom = state.accounts.filter(a => a.owner === '새롬').reduce((s,a) => s+a.balance, 0);
-  return { kyungwoo, saerom };
-}
-
 function initWealthHistory() {
-  const now = new Date();
-  const { kyungwoo, saerom } = currentWealthSplit();
   state.wealthHistory = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now); d.setDate(d.getDate() - i * 7);
-    const noise = 1 + (Math.random() - 0.5) * 0.1;
-    const weekNumber = 11 - i;
-    const trend = 0.85 + (weekNumber / 11) * 0.15;
-    state.wealthHistory.push({
-      date: d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-      kyungwoo: Math.max(0, kyungwoo * trend * noise),
-      saerom: Math.max(0, saerom * trend * noise),
-      ts: d.getTime()
-    });
-  }
-  state.wealthHistory[state.wealthHistory.length - 1].kyungwoo = kyungwoo;
-  state.wealthHistory[state.wealthHistory.length - 1].saerom = saerom;
 }
 
 // ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
@@ -1757,13 +1736,19 @@ function renderChart(period = '1M') {
     const cutoff = now - 30*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
   }
+  const canvas = document.getElementById('wealthChart');
+  const emptyState = document.getElementById('wealthChartEmpty');
   if (!data.length) {
-    const { kyungwoo, saerom } = currentWealthSplit();
-    data = [{ date: '이번 주', kyungwoo, saerom }];
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    canvas.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
   }
+  canvas.style.display = '';
+  emptyState.style.display = 'none';
 
   const toManwon = v => Math.round(v / 10000);
-  const ctx = document.getElementById('wealthChart').getContext('2d');
+  const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
     type: 'bar',
