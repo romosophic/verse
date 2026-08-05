@@ -628,6 +628,7 @@
   .modal {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 20px; padding: 28px; width: min(480px, 90vw);
+    max-height: 90vh; overflow-y: auto;
     transform: translateY(20px); transition: transform 0.25s;
   }
   .modal-overlay.open .modal { transform: translateY(0); }
