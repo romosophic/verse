@@ -1079,6 +1079,14 @@
       </select>
     </div>
     <div class="form-row">
+      <div class="form-label">가용 분류</div>
+      <select class="form-input" id="newLiquidity" style="cursor:pointer;">
+        <option value="가용 쉬움">가용 쉬움</option>
+        <option value="가용 어려움">가용 어려움</option>
+        <option value="가용 불가">가용 불가</option>
+      </select>
+    </div>
+    <div class="form-row">
       <div class="form-label">현재 잔액</div>
       <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="newBalance" placeholder="5000000" />
     </div>
@@ -1114,6 +1122,14 @@
     <div class="form-row">
       <div class="form-label">계좌 별명</div>
       <input class="form-input" id="editBalanceAccName" placeholder="급여통장" />
+    </div>
+    <div class="form-row">
+      <div class="form-label">가용 분류</div>
+      <select class="form-input" id="editBalanceLiquidity" style="cursor:pointer;">
+        <option value="가용 쉬움">가용 쉬움</option>
+        <option value="가용 어려움">가용 어려움</option>
+        <option value="가용 불가">가용 불가</option>
+      </select>
     </div>
     <div class="form-row">
       <div class="form-label">연 이율 (%)</div>
@@ -1454,6 +1470,7 @@ async function dbLoadAll() {
     rate: parseFloat(a.rate), owner: a.owner,
     accountNumber: a.account_number || '',
     lastCheckedAt: a.last_checked_at || null,
+    liquidity: a.liquidity || '가용 쉬움',
     _dbId: a.id,
   }));
 
@@ -1545,6 +1562,7 @@ async function dbSaveAccount(acc) {
     balance: acc.balance, prev_balance: acc.balance,
     rate: acc.rate, is_active: true,
     account_number: acc.accountNumber || null,
+    liquidity: acc.liquidity || '가용 쉬움',
   }).select().single();
   if (error) { console.error('account insert error', error); return null; }
   return data;
@@ -1822,15 +1840,19 @@ function setPeriod(btn, p) {
   renderChart(p);
 }
 
-// ===== ASSET PIE (계좌별 비중 · 경우+새롬 합산) =====
-const ASSET_PIE_COLORS = ['#81912F', '#C8900A', '#677525', '#A07008', '#9CC6DB', '#B5651D', '#5C8A8A', '#8E5572', '#3E6259', '#B08968'];
+// ===== ASSET PIE (가용 분류별 비중 · 경우+새롬 합산) =====
+const LIQUIDITY_LEVELS = ['가용 쉬움', '가용 어려움', '가용 불가'];
+const LIQUIDITY_COLORS = { '가용 쉬움': '#81912F', '가용 어려움': '#C8900A', '가용 불가': '#7A7260' };
 let assetPieInstance = null;
 function renderAssetPie() {
   const canvas = document.getElementById('assetPieChart');
   const emptyState = document.getElementById('assetPieEmpty');
-  const slices = state.accounts
-    .filter(a => a.balance > 0)
-    .map(a => ({ label: `${a.bank} ${a.name}`, value: a.balance }));
+  const slices = LIQUIDITY_LEVELS
+    .map(level => ({
+      label: level,
+      value: state.accounts.filter(a => (a.liquidity || '가용 쉬움') === level).reduce((s, a) => s + a.balance, 0)
+    }))
+    .filter(s => s.value > 0);
 
   if (!slices.length) {
     if (assetPieInstance) { assetPieInstance.destroy(); assetPieInstance = null; }
@@ -1850,7 +1872,7 @@ function renderAssetPie() {
       labels: slices.map(s => s.label),
       datasets: [{
         data: slices.map(s => s.value),
-        backgroundColor: slices.map((_, i) => ASSET_PIE_COLORS[i % ASSET_PIE_COLORS.length]),
+        backgroundColor: slices.map(s => LIQUIDITY_COLORS[s.label]),
         borderColor: '#FFFFFF',
         borderWidth: 2,
       }]
@@ -1924,6 +1946,7 @@ function renderAccounts() {
     { key: 'accountNumber', label: '계좌번호' },
     { key: 'balance', label: '잔액', num: true },
     { key: 'rate',  label: '이율', num: true },
+    { key: 'liquidity', label: '가용 분류' },
     { key: null,    label: '', noSort: true },
   ];
 
@@ -1951,6 +1974,7 @@ function renderAccounts() {
       <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
       <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:${LIQUIDITY_COLORS[a.liquidity || '가용 쉬움']}"></span>${a.liquidity || '가용 쉬움'}</span></td>
       <td style="text-align:center;padding:0 8px"><button onclick="editAccById('${a.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
     </tr>`;
   }).join('');
@@ -2771,6 +2795,7 @@ function openEditBalanceModal(acc) {
   document.getElementById('editBalanceInput').value = fmtRaw(acc.balance);
   document.getElementById('editBalanceBank').value = acc.bank || '';
   document.getElementById('editBalanceAccName').value = acc.name || '';
+  document.getElementById('editBalanceLiquidity').value = acc.liquidity || '가용 쉬움';
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
   document.getElementById('editBalanceMemo').value = '';
@@ -2801,25 +2826,28 @@ async function saveEditedBalance() {
   const newRate = parseFloat(document.getElementById('editBalanceRate').value);
   const newBank = document.getElementById('editBalanceBank').value.trim();
   const newName = document.getElementById('editBalanceAccName').value.trim();
+  const newLiquidity = document.getElementById('editBalanceLiquidity').value;
   if (isNaN(newBal)) return;
   const memo = document.getElementById('editBalanceMemo').value.trim() || '기초 자산 수정';
   const diff = newBal - _editingAcc.balance;
   const rateChanged = !isNaN(newRate) && newRate !== _editingAcc.rate;
   const bankChanged = newBank && newBank !== _editingAcc.bank;
   const nameChanged = newName && newName !== _editingAcc.name;
+  const liquidityChanged = newLiquidity !== (_editingAcc.liquidity || '가용 쉬움');
 
-  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged) { closeEditBalanceModal(); return; }
+  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged && !liquidityChanged) { closeEditBalanceModal(); return; }
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
   if (newBank) _editingAcc.bank = newBank;
   if (newName) _editingAcc.name = newName;
+  _editingAcc.liquidity = newLiquidity;
   _editingAcc.balance = newBal;
   _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, updated_at: new Date().toISOString() })
+      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, liquidity: _editingAcc.liquidity, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
@@ -2850,9 +2878,10 @@ async function addAccount() {
   const balance = parseAmt('newBalance') || 0;
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
   const owner = document.getElementById('newOwner').value;
+  const liquidity = document.getElementById('newLiquidity').value;
   const accountNumber = document.getElementById('newAccNumber').value.trim();
 
-  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, accountNumber, prevBalance: balance };
+  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, liquidity, accountNumber, prevBalance: balance };
   state.accounts.push(newAcc);
 
   if (session.householdId) {
@@ -2862,6 +2891,7 @@ async function addAccount() {
 
   closeModal();
   renderAccounts();
+  renderAssetPie();
 }
 
 // ===== PAGE NAV =====
