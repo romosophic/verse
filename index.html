@@ -1739,6 +1739,33 @@ function initWealthHistory() {
   state.wealthHistory = [];
 }
 
+// 현재 잔액을 그대로 유지한다고 가정하고, 미래 가용 시점마다
+// 가용/비가용 비중이 어떻게 바뀌는지 보여주는 예상 포인트를 만든다.
+function buildAvailabilityProjection() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const futureDates = [...new Set(
+    state.accounts.map(a => a.availableFrom).filter(d => d && d > todayStr)
+  )].sort();
+  if (!futureDates.length) return [];
+
+  const kyungwooAccs = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동');
+  const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
+  const kTotal = kyungwooAccs.reduce((s, a) => s + a.balance, 0);
+  const sTotal = saeromAccs.reduce((s, a) => s + a.balance, 0);
+
+  return futureDates.map(d => {
+    const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
+    const sAvail = saeromAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
+    return {
+      date: new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }),
+      kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
+      saeromAvailable: sAvail, saeromUnavailable: sTotal - sAvail,
+      ts: new Date(d).getTime(),
+      projected: true,
+    };
+  });
+}
+
 // ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
 let chartInstance = null;
 function renderChart(period = '1M') {
@@ -1758,6 +1785,7 @@ function renderChart(period = '1M') {
     const cutoff = now - 30*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
   }
+  data = [...data, ...buildAvailabilityProjection()];
   const canvas = document.getElementById('wealthChart');
   const emptyState = document.getElementById('wealthChartEmpty');
   if (!data.length) {
@@ -1780,28 +1808,28 @@ function renderChart(period = '1M') {
         {
           label: '경우 가용',
           data: data.map(d => toManwon(d.kyungwooAvailable)),
-          backgroundColor: '#81912F',
+          backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.55)' : '#81912F'),
           stack: 'wealth',
           borderSkipped: false,
         },
         {
           label: '새롬 가용',
           data: data.map(d => toManwon(d.saeromAvailable)),
-          backgroundColor: '#C8900A',
+          backgroundColor: data.map(d => d.projected ? 'rgba(200,144,10,0.55)' : '#C8900A'),
           stack: 'wealth',
           borderSkipped: false,
         },
         {
           label: '경우 비가용',
           data: data.map(d => toManwon(d.kyungwooUnavailable)),
-          backgroundColor: 'rgba(129,145,47,0.35)',
+          backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.18)' : 'rgba(129,145,47,0.35)'),
           stack: 'wealth',
           borderSkipped: false,
         },
         {
           label: '새롬 비가용',
           data: data.map(d => toManwon(d.saeromUnavailable)),
-          backgroundColor: 'rgba(200,144,10,0.35)',
+          backgroundColor: data.map(d => d.projected ? 'rgba(200,144,10,0.18)' : 'rgba(200,144,10,0.35)'),
           stack: 'wealth',
           borderRadius: { topLeft: 4, topRight: 4 },
           borderSkipped: false,
@@ -1821,6 +1849,10 @@ function renderChart(period = '1M') {
           titleColor: '#9b9080', bodyColor: '#9CC6DB',
           bodyFont: { family: 'Black Han Sans', size: 13 },
           callbacks: {
+            title: items => {
+              const label = items[0]?.label || '';
+              return data[items[0]?.dataIndex]?.projected ? `${label} (예상)` : label;
+            },
             label: ctx => `${ctx.dataset.label}  ${ctx.parsed.y.toLocaleString()}만원`,
             footer: items => {
               const total = items.reduce((s, it) => s + it.parsed.y, 0);
