@@ -1806,30 +1806,16 @@ function renderChart(period = '1M') {
       labels: data.map(d => d.date),
       datasets: [
         {
-          label: '경우 가용',
-          data: data.map(d => toManwon(d.kyungwooAvailable)),
-          backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.55)' : '#81912F'),
+          label: '가용',
+          data: data.map(d => toManwon(d.kyungwooAvailable + d.saeromAvailable)),
+          backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.45)' : '#81912F'),
           stack: 'wealth',
           borderSkipped: false,
         },
         {
-          label: '새롬 가용',
-          data: data.map(d => toManwon(d.saeromAvailable)),
-          backgroundColor: data.map(d => d.projected ? 'rgba(200,144,10,0.55)' : '#C8900A'),
-          stack: 'wealth',
-          borderSkipped: false,
-        },
-        {
-          label: '경우 비가용',
-          data: data.map(d => toManwon(d.kyungwooUnavailable)),
-          backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.18)' : 'rgba(129,145,47,0.35)'),
-          stack: 'wealth',
-          borderSkipped: false,
-        },
-        {
-          label: '새롬 비가용',
-          data: data.map(d => toManwon(d.saeromUnavailable)),
-          backgroundColor: data.map(d => d.projected ? 'rgba(200,144,10,0.18)' : 'rgba(200,144,10,0.35)'),
+          label: '비가용',
+          data: data.map(d => toManwon(d.kyungwooUnavailable + d.saeromUnavailable)),
+          backgroundColor: data.map(d => d.projected ? 'rgba(122,114,96,0.35)' : '#7A7260'),
           stack: 'wealth',
           borderRadius: { topLeft: 4, topRight: 4 },
           borderSkipped: false,
@@ -1853,7 +1839,16 @@ function renderChart(period = '1M') {
               const label = items[0]?.label || '';
               return data[items[0]?.dataIndex]?.projected ? `${label} (예상)` : label;
             },
-            label: ctx => `${ctx.dataset.label}  ${ctx.parsed.y.toLocaleString()}만원`,
+            label: ctx => {
+              const pt = data[ctx.dataIndex];
+              const isAvail = ctx.datasetIndex === 0;
+              const k = toManwon(isAvail ? pt.kyungwooAvailable : pt.kyungwooUnavailable);
+              const s = toManwon(isAvail ? pt.saeromAvailable : pt.saeromUnavailable);
+              return [
+                `${ctx.dataset.label}  ${ctx.parsed.y.toLocaleString()}만원`,
+                `　경우 ${k.toLocaleString()}만원 · 새롬 ${s.toLocaleString()}만원`,
+              ];
+            },
             footer: items => {
               const total = items.reduce((s, it) => s + it.parsed.y, 0);
               return `합계  ${total.toLocaleString()}만원`;
