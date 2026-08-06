@@ -1455,6 +1455,7 @@ async function dbLoadAll() {
     rate: parseFloat(a.rate), owner: a.owner,
     accountNumber: a.account_number || '',
     lastCheckedAt: a.last_checked_at || null,
+    lastCheckedBy: a.last_checked_by || null,
     availableFrom: a.available_from || null,
     _dbId: a.id,
   }));
@@ -1465,10 +1466,12 @@ async function dbLoadAll() {
     if (wc.kyungwoo_done) {
       state.weeklyProgress['경우'].done = true;
       state.weeklyProgress['경우'].checkedAt = wc.kyungwoo_checked_at ? new Date(wc.kyungwoo_checked_at).getTime() : Date.now();
+      state.weeklyProgress['경우'].recordedBy = wc.kyungwoo_recorded_by || null;
     }
     if (wc.saerom_done) {
       state.weeklyProgress['새롬'].done = true;
       state.weeklyProgress['새롬'].checkedAt = wc.saerom_checked_at ? new Date(wc.saerom_checked_at).getTime() : Date.now();
+      state.weeklyProgress['새롬'].recordedBy = wc.saerom_recorded_by || null;
     }
   }
 
@@ -1540,6 +1543,7 @@ async function dbSaveTransaction(tx, accountId) {
 async function dbUpdateAccountBalance(acc) {
   const update = { balance: acc.balance, prev_balance: acc.prevBalance, updated_at: new Date().toISOString() };
   if (acc.lastCheckedAt) update.last_checked_at = acc.lastCheckedAt;
+  if (acc.lastCheckedBy) update.last_checked_by = acc.lastCheckedBy;
   const { error } = await sb.from('accounts').update(update).eq('id', acc._dbId || acc.id);
   if (error) console.error('account update error', error);
 }
@@ -1565,8 +1569,9 @@ async function dbSaveWeeklyCheck(player, balance) {
     .upsert({ household_id: session.householdId, week_start: weekStart }, { onConflict: 'household_id,week_start' })
     .select().single();
 
-  const field = player === '경우' ? { kyungwoo_done: true, kyungwoo_checked_at: new Date().toISOString() }
-                                  : { saerom_done: true, saerom_checked_at: new Date().toISOString() };
+  const field = player === '경우'
+    ? { kyungwoo_done: true, kyungwoo_checked_at: new Date().toISOString(), kyungwoo_recorded_by: session.playerName }
+    : { saerom_done: true, saerom_checked_at: new Date().toISOString(), saerom_recorded_by: session.playerName };
   await sb.from('weekly_checks').update(field).eq('id', wc.id);
 }
 
@@ -1695,8 +1700,8 @@ let state = {
   weeklyStep: 0,
   weeklyPlayer: '경우',   // whose turn: '경우' | '새롬'
   weeklyProgress: {
-    경우: { done: false, checkedAt: null, totalBalance: 0, prevTotal: 0 },
-    새롬: { done: false, checkedAt: null, totalBalance: 0, prevTotal: 0 },
+    경우: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0 },
+    새롬: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0 },
   },
   startTime: Date.now(),
   interestAccrued: 0,
@@ -2086,8 +2091,8 @@ function resetWeekly() {
   state.weeklyStep = 0;
   state.weeklyPlayer = null;
   state.weeklyProgress = {
-    경우: { done: false, checkedAt: null, totalBalance: 0, prevTotal: 0, steps: 0, totalSteps: 0 },
-    새롬: { done: false, checkedAt: null, totalBalance: 0, prevTotal: 0, steps: 0, totalSteps: 0 },
+    경우: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0, steps: 0, totalSteps: 0 },
+    새롬: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0, steps: 0, totalSteps: 0 },
   };
   PLAYERS.forEach(p => {
     const accs = playerAccounts(p);
@@ -2127,17 +2132,15 @@ function renderWeeklySelect(container) {
     const total = accs.length;
     const pct = total ? Math.round(steps / total * 100) : 0;
     const dotClass = done ? 'dot-done' : 'dot-waiting';
-    const dotLabel = done ? '✅ 완료' : '대기중';
-    const isMe = session.playerName === p;
+    const recordedBy = prog[p].recordedBy;
+    const dotLabel = done ? (recordedBy && recordedBy !== p ? `✅ 완료 · ${recordedBy}가 입력` : '✅ 완료') : '대기중';
 
     let btnHtml = '';
     const bgColor = cls === 'k' ? 'var(--accent)' : 'var(--accent3)';
     if (done) {
       btnHtml = `<button class="player-btn ${cls} done-btn" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;">수정하기 ✎</button>`;
-    } else if (isMe) {
-      btnHtml = `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;background:${bgColor};color:#fff;border:none;">체크 시작</button>`;
     } else {
-      btnHtml = `<button class="player-btn ${cls}" disabled style="opacity:0.35;cursor:not-allowed;margin-top:12px;width:100%;">대기중...</button>`;
+      btnHtml = `<button class="player-btn ${cls}" onclick="startPlayerCheck('${p}')" style="margin-top:12px;width:100%;background:${bgColor};color:#fff;border:none;">체크 시작</button>`;
     }
 
     return `
@@ -2173,7 +2176,7 @@ function renderWeeklySelect(container) {
         <span class="lc-row-name">${a.bank} ${a.name}</span>
         <span class="lc-row-right">
           <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
-          <span class="lc-row-date">${fmtTs(a.lastCheckedAt)}</span>
+          <span class="lc-row-date">${fmtTs(a.lastCheckedAt)}${a.lastCheckedBy ? ` · ${a.lastCheckedBy} 입력` : ''}</span>
         </span>
       </div>`).join('');
   };
@@ -2216,6 +2219,7 @@ function renderWeeklyQA(container, player) {
     const unavailable = total - available;
     state.weeklyProgress[player].done = true;
     state.weeklyProgress[player].checkedAt = Date.now();
+    state.weeklyProgress[player].recordedBy = session.playerName;
     state.weeklyProgress[player].totalBalance = total;
     state.weeklyProgress[player].steps = accs.length;
     state.weeklyPlayer = null;
@@ -2660,6 +2664,7 @@ function applyQABalance(accountIdx, newBalance) {
   state.accounts[accountIdx].balance = newBalance;
   state.accounts[accountIdx].prevBalance = newBalance;
   state.accounts[accountIdx].lastCheckedAt = now;
+  state.accounts[accountIdx].lastCheckedBy = session.playerName;
   state.weeklyStep++;
 
   if (state.weeklyPlayer) {
