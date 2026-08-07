@@ -311,6 +311,13 @@
   }
   .accounts-table tr { cursor: pointer; transition: background 0.15s; }
   .accounts-table tr:hover td { background: var(--surface2); }
+  .accounts-table th:last-child,
+  .accounts-table td:last-child {
+    position: sticky; right: 0; z-index: 2;
+    background: var(--bg);
+    box-shadow: -4px 0 6px -4px rgba(0,0,0,0.15);
+  }
+  .accounts-table tr:hover td:last-child { background: var(--surface2); }
   .accounts-table tr.owner-k td:first-child { border-left: 3px solid var(--accent); }
   .accounts-table tr.owner-s td:first-child { border-left: 3px solid var(--accent3); }
   .accounts-table .col-owner { font-weight: bold; }
