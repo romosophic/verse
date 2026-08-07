@@ -323,9 +323,6 @@
   .accounts-table .col-owner { font-weight: bold; }
   .accounts-table .col-owner.k { color: var(--accent); }
   .accounts-table .col-owner.s { color: var(--accent3); }
-  .accounts-table .col-balance { font-family: 'MaruMinya', sans-serif; text-align: right; }
-  .accounts-table .col-balance.k { color: var(--accent2); }
-  .accounts-table .col-balance.s { color: var(--accent3); }
   .accounts-table .col-rate { text-align: right; color: var(--gold); font-size: 0.85rem; }
   .accounts-table .col-num { text-align: right; }
   .account-card {
@@ -1031,16 +1028,8 @@
 <!-- MODAL: 자산 잔액 수정 -->
 <div class="modal-overlay" id="editBalanceModal" onclick="if(event.target===this)closeEditBalanceModal()">
   <div class="modal">
-    <div class="modal-title">기초 자산 수정 <button class="modal-close" onclick="closeEditBalanceModal()">✕</button></div>
+    <div class="modal-title">계좌 정보 수정 <button class="modal-close" onclick="closeEditBalanceModal()">✕</button></div>
     <div style="font-size: 0.88rem;color:var(--muted);margin-bottom:16px" id="editBalanceAccInfo"></div>
-    <div class="form-row">
-      <div class="form-label">현재 잔액</div>
-      <div style="font-size: 0.92rem;color:var(--muted);margin-bottom:6px" id="editBalanceCurrent"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-label">수정할 잔액</div>
-      <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="editBalanceInput" placeholder="0" />
-    </div>
     <div class="form-row">
       <div class="form-label">은행/증권사</div>
       <input class="form-input" id="editBalanceBank" placeholder="KB국민은행" />
@@ -1060,10 +1049,6 @@
     <div class="form-row">
       <div class="form-label">계좌번호</div>
       <input class="form-input" id="editBalanceAccNumber" placeholder="123-456-789012" />
-    </div>
-    <div class="form-row">
-      <div class="form-label">수정 사유 (선택)</div>
-      <input class="form-input" id="editBalanceMemo" placeholder="예: 실계좌 확인 후 조정" />
     </div>
     <button class="submit-income" onclick="saveEditedBalance()" style="width:100%;padding:18px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'MaruMinya',sans-serif;font-size:1.1rem;cursor:pointer;">저장</button>
     <button onclick="confirmDeleteAccount()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(224,63,79,0.3);background:transparent;color:var(--danger);font-family:'Gowun Dodum',sans-serif;font-size: 1rem;cursor:pointer;">자산 삭제</button>
@@ -1904,7 +1889,6 @@ function renderAccounts() {
     { key: 'bank',  label: '은행' },
     { key: 'name',  label: '계좌명' },
     { key: 'accountNumber', label: '계좌번호' },
-    { key: 'balance', label: '잔액', num: true },
     { key: 'rate',  label: '이율', num: true },
     { key: 'availableFrom', label: '가용 시점' },
     { key: null,    label: '', noSort: true },
@@ -1932,7 +1916,6 @@ function renderAccounts() {
       <td>${a.bank}</td>
       <td>${a.name}</td>
       <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
-      <td class="col-balance ${oc}">${fmt(a.balance)}</td>
       <td class="col-rate">연 ${a.rate}%</td>
       <td>${(() => {
         const avail = isAccountAvailable(a);
@@ -2611,14 +2594,11 @@ let _editingAcc = null;
 function openEditBalanceModal(acc) {
   _editingAcc = acc;
   document.getElementById('editBalanceAccInfo').textContent = `${acc.bank} · ${acc.name} (${acc.owner})`;
-  document.getElementById('editBalanceCurrent').textContent = `현재: ${fmt(acc.balance)}`;
-  document.getElementById('editBalanceInput').value = fmtRaw(acc.balance);
   document.getElementById('editBalanceBank').value = acc.bank || '';
   document.getElementById('editBalanceAccName').value = acc.name || '';
   document.getElementById('editBalanceAvailableFrom').value = acc.availableFrom || '';
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
-  document.getElementById('editBalanceMemo').value = '';
   document.getElementById('editBalanceModal').classList.add('open');
 }
 function closeEditBalanceModal() {
@@ -2641,53 +2621,31 @@ async function deleteAccount() {
 }
 async function saveEditedBalance() {
   if (!_editingAcc) return;
-  const newBal = parseAmt('editBalanceInput');
   const newRate = parseFloat(document.getElementById('editBalanceRate').value);
   const newBank = document.getElementById('editBalanceBank').value.trim();
   const newName = document.getElementById('editBalanceAccName').value.trim();
   const newAvailableFrom = document.getElementById('editBalanceAvailableFrom').value || null;
-  if (isNaN(newBal)) return;
-  const memo = document.getElementById('editBalanceMemo').value.trim() || '기초 자산 수정';
-  const diff = newBal - _editingAcc.balance;
   const rateChanged = !isNaN(newRate) && newRate !== _editingAcc.rate;
   const bankChanged = newBank && newBank !== _editingAcc.bank;
   const nameChanged = newName && newName !== _editingAcc.name;
   const availableFromChanged = newAvailableFrom !== (_editingAcc.availableFrom || null);
 
-  if (diff === 0 && !rateChanged && !bankChanged && !nameChanged && !availableFromChanged) { closeEditBalanceModal(); return; }
+  if (!rateChanged && !bankChanged && !nameChanged && !availableFromChanged) { closeEditBalanceModal(); return; }
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
   if (newBank) _editingAcc.bank = newBank;
   if (newName) _editingAcc.name = newName;
   _editingAcc.availableFrom = newAvailableFrom;
-  _editingAcc.balance = newBal;
   _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ balance: _editingAcc.balance, rate: _editingAcc.rate, prev_balance: _editingAcc.prevBalance, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, available_from: _editingAcc.availableFrom, updated_at: new Date().toISOString() })
+      .update({ rate: _editingAcc.rate, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, available_from: _editingAcc.availableFrom, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
-  if (diff !== 0) {
-    const tx = {
-      id: 'adj_' + Date.now(),
-      emoji: '📝',
-      name: memo,
-      meta: `${session.playerName} · ${new Date().toLocaleDateString('ko-KR', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`,
-      amount: diff,
-      type: diff > 0 ? 'in' : 'out',
-      isAdjust: true,
-      ts: Date.now(),
-      manual: true,
-    };
-    state.transactions.unshift(tx);
-    if (sb) await dbSaveTransaction(tx, _editingAcc._dbId || _editingAcc.id);
-  }
-
   renderAccounts();
-  renderTxList('allTxList');
   closeEditBalanceModal();
 }
 async function addAccount() {
