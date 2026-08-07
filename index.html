@@ -1768,7 +1768,24 @@ function buildAvailabilityProjection() {
 
 // ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
 let chartInstance = null;
+let _wealthTooltipDismissBound = false;
+function bindWealthTooltipDismiss() {
+  if (_wealthTooltipDismissBound) return;
+  _wealthTooltipDismissBound = true;
+  const dismiss = e => {
+    if (!chartInstance) return;
+    const canvas = document.getElementById('wealthChart');
+    if (canvas && !canvas.contains(e.target)) {
+      chartInstance.setActiveElements([]);
+      chartInstance.tooltip?.setActiveElements([], { x: 0, y: 0 });
+      chartInstance.update();
+    }
+  };
+  document.addEventListener('touchstart', dismiss, { passive: true });
+  document.addEventListener('click', dismiss);
+}
 function renderChart(period = '1M') {
+  bindWealthTooltipDismiss();
   let data = state.wealthHistory;
   const now = Date.now();
 
@@ -1833,7 +1850,11 @@ function renderChart(period = '1M') {
         tooltip: {
           backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
           titleColor: '#9b9080', bodyColor: '#9CC6DB',
-          bodyFont: { family: 'Black Han Sans', size: 13 },
+          titleFont: { size: 11 },
+          bodyFont: { family: 'Black Han Sans', size: 10 },
+          footerFont: { size: 10 },
+          padding: 8,
+          boxPadding: 4,
           callbacks: {
             title: items => {
               const label = items[0]?.label || '';
@@ -1844,10 +1865,7 @@ function renderChart(period = '1M') {
               const isAvail = ctx.datasetIndex === 0;
               const k = toManwon(isAvail ? pt.kyungwooAvailable : pt.kyungwooUnavailable);
               const s = toManwon(isAvail ? pt.saeromAvailable : pt.saeromUnavailable);
-              return [
-                `${ctx.dataset.label}  ${ctx.parsed.x.toLocaleString()}만원`,
-                `　경우 ${k.toLocaleString()}만원 · 새롬 ${s.toLocaleString()}만원`,
-              ];
+              return `${ctx.dataset.label} ${ctx.parsed.x.toLocaleString()}만 (경우${k.toLocaleString()}·새롬${s.toLocaleString()})`;
             },
             footer: items => {
               const total = items.reduce((s, it) => s + it.parsed.x, 0);
