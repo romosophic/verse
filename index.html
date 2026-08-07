@@ -1006,6 +1006,19 @@
       </select>
     </div>
     <div class="form-row">
+      <div class="form-label">유형</div>
+      <select class="form-input" id="newType" style="cursor:pointer;" onchange="toggleMonthlyDepositRow('new')">
+        <option value="예금">예금</option>
+        <option value="적금">적금</option>
+        <option value="투자">투자</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+    <div class="form-row" id="newMonthlyDepositRow" style="display:none">
+      <div class="form-label">월 납입액</div>
+      <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="newMonthlyDeposit" placeholder="300000" />
+    </div>
+    <div class="form-row">
       <div class="form-label">가용 시점 (비워두면 즉시 가용)</div>
       <input class="form-input" type="date" id="newAvailableFrom" style="cursor:pointer;" />
     </div>
@@ -1037,6 +1050,19 @@
     <div class="form-row">
       <div class="form-label">계좌 별명</div>
       <input class="form-input" id="editBalanceAccName" placeholder="급여통장" />
+    </div>
+    <div class="form-row">
+      <div class="form-label">유형</div>
+      <select class="form-input" id="editBalanceType" style="cursor:pointer;" onchange="toggleMonthlyDepositRow('editBalance')">
+        <option value="예금">예금</option>
+        <option value="적금">적금</option>
+        <option value="투자">투자</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+    <div class="form-row" id="editBalanceMonthlyDepositRow" style="display:none">
+      <div class="form-label">월 납입액</div>
+      <input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="editBalanceMonthlyDeposit" placeholder="300000" />
     </div>
     <div class="form-row">
       <div class="form-label">가용 시점 (비워두면 즉시 가용)</div>
@@ -1169,6 +1195,10 @@ function fmtAmtInput(el) {
 function parseAmt(id) {
   const v = document.getElementById(id)?.value || '';
   return parseFloat(v.replace(/,/g, '')) || 0;
+}
+function toggleMonthlyDepositRow(prefix) {
+  const type = document.getElementById(prefix === 'new' ? 'newType' : 'editBalanceType').value;
+  document.getElementById(prefix + 'MonthlyDepositRow').style.display = type === '적금' ? 'block' : 'none';
 }
 
 // ===== SUPABASE =====
@@ -1382,6 +1412,8 @@ async function dbLoadAll() {
     lastCheckedAt: a.last_checked_at || null,
     lastCheckedBy: a.last_checked_by || null,
     availableFrom: a.available_from || null,
+    type: a.type || '예금',
+    monthlyDeposit: a.monthly_deposit || 0,
     _dbId: a.id,
   }));
 
@@ -1482,6 +1514,8 @@ async function dbSaveAccount(acc) {
     rate: acc.rate, is_active: true,
     account_number: acc.accountNumber || null,
     available_from: acc.availableFrom || null,
+    type: acc.type || '예금',
+    monthly_deposit: acc.monthlyDeposit || null,
   }).select().single();
   if (error) { console.error('account insert error', error); return null; }
   return data;
@@ -1672,6 +1706,19 @@ function initWealthHistory() {
 
 // 현재 잔액을 그대로 유지한다고 가정하고, 미래 가용 시점마다
 // 가용/비가용 비중이 어떻게 바뀌는지 보여주는 예상 포인트를 만든다.
+function monthsBetween(d1, d2) {
+  return Math.max(0, (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()));
+}
+// 적금은 만기(가용 시점)까지 매달 납입액만큼 잔액이 늘어난다고 가정
+function projectedBalance(acc, asOfStr) {
+  if (acc.type !== '적금' || !acc.monthlyDeposit) return acc.balance;
+  const today = new Date();
+  const asOf = new Date(asOfStr);
+  const maturity = acc.availableFrom ? new Date(acc.availableFrom) : null;
+  const cutoff = maturity && maturity < asOf ? maturity : asOf;
+  return acc.balance + acc.monthlyDeposit * monthsBetween(today, cutoff);
+}
+
 function buildAvailabilityProjection() {
   const todayStr = new Date().toISOString().slice(0,10);
   const futureDates = [...new Set(
@@ -1681,12 +1728,12 @@ function buildAvailabilityProjection() {
 
   const kyungwooAccs = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동');
   const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
-  const kTotal = kyungwooAccs.reduce((s, a) => s + a.balance, 0);
-  const sTotal = saeromAccs.reduce((s, a) => s + a.balance, 0);
 
   return futureDates.map(d => {
-    const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
-    const sAvail = saeromAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
+    const kTotal = kyungwooAccs.reduce((s, a) => s + projectedBalance(a, d), 0);
+    const sTotal = saeromAccs.reduce((s, a) => s + projectedBalance(a, d), 0);
+    const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + projectedBalance(a, d), 0);
+    const sAvail = saeromAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + projectedBalance(a, d), 0);
     return {
       date: fmtChartDate(new Date(d)),
       kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
@@ -1889,6 +1936,7 @@ function renderAccounts() {
     { key: 'bank',  label: '은행' },
     { key: 'name',  label: '계좌명' },
     { key: 'accountNumber', label: '계좌번호' },
+    { key: 'type', label: '유형' },
     { key: 'rate',  label: '이율', num: true },
     { key: 'availableFrom', label: '가용 시점' },
     { key: null,    label: '', noSort: true },
@@ -1916,6 +1964,7 @@ function renderAccounts() {
       <td>${a.bank}</td>
       <td>${a.name}</td>
       <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
+      <td style="font-size:0.85rem;color:var(--muted)">${a.type || '예금'}${a.type === '적금' && a.monthlyDeposit ? ` (월${fmt(a.monthlyDeposit)})` : ''}</td>
       <td class="col-rate">연 ${a.rate}%</td>
       <td>${(() => {
         const avail = isAccountAvailable(a);
@@ -2596,6 +2645,9 @@ function openEditBalanceModal(acc) {
   document.getElementById('editBalanceAccInfo').textContent = `${acc.bank} · ${acc.name} (${acc.owner})`;
   document.getElementById('editBalanceBank').value = acc.bank || '';
   document.getElementById('editBalanceAccName').value = acc.name || '';
+  document.getElementById('editBalanceType').value = acc.type || '예금';
+  document.getElementById('editBalanceMonthlyDeposit').value = acc.monthlyDeposit ? fmtRaw(acc.monthlyDeposit) : '';
+  toggleMonthlyDepositRow('editBalance');
   document.getElementById('editBalanceAvailableFrom').value = acc.availableFrom || '';
   document.getElementById('editBalanceRate').value = acc.rate;
   document.getElementById('editBalanceAccNumber').value = acc.accountNumber || '';
@@ -2625,23 +2677,29 @@ async function saveEditedBalance() {
   const newBank = document.getElementById('editBalanceBank').value.trim();
   const newName = document.getElementById('editBalanceAccName').value.trim();
   const newAvailableFrom = document.getElementById('editBalanceAvailableFrom').value || null;
+  const newType = document.getElementById('editBalanceType').value;
+  const newMonthlyDeposit = parseAmt('editBalanceMonthlyDeposit');
   const rateChanged = !isNaN(newRate) && newRate !== _editingAcc.rate;
   const bankChanged = newBank && newBank !== _editingAcc.bank;
   const nameChanged = newName && newName !== _editingAcc.name;
   const availableFromChanged = newAvailableFrom !== (_editingAcc.availableFrom || null);
+  const typeChanged = newType !== (_editingAcc.type || '예금');
+  const monthlyDepositChanged = newMonthlyDeposit !== (_editingAcc.monthlyDeposit || 0);
 
-  if (!rateChanged && !bankChanged && !nameChanged && !availableFromChanged) { closeEditBalanceModal(); return; }
+  if (!rateChanged && !bankChanged && !nameChanged && !availableFromChanged && !typeChanged && !monthlyDepositChanged) { closeEditBalanceModal(); return; }
 
   if (!isNaN(newRate)) _editingAcc.rate = newRate;
   if (newBank) _editingAcc.bank = newBank;
   if (newName) _editingAcc.name = newName;
   _editingAcc.availableFrom = newAvailableFrom;
+  _editingAcc.type = newType;
+  _editingAcc.monthlyDeposit = newType === '적금' ? newMonthlyDeposit : 0;
   _editingAcc.accountNumber = document.getElementById('editBalanceAccNumber').value.trim();
   state.accounts = state.accounts.map(a => a.id === _editingAcc.id ? _editingAcc : a);
 
   if (sb) {
     await sb.from('accounts')
-      .update({ rate: _editingAcc.rate, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, available_from: _editingAcc.availableFrom, updated_at: new Date().toISOString() })
+      .update({ rate: _editingAcc.rate, account_number: _editingAcc.accountNumber || null, bank: _editingAcc.bank, name: _editingAcc.name, available_from: _editingAcc.availableFrom, type: _editingAcc.type, monthly_deposit: _editingAcc.monthlyDeposit || null, updated_at: new Date().toISOString() })
       .eq('id', _editingAcc._dbId || _editingAcc.id);
   }
 
@@ -2655,9 +2713,11 @@ async function addAccount() {
   const rate = parseFloat(document.getElementById('newRate').value) || 0;
   const owner = document.getElementById('newOwner').value;
   const availableFrom = document.getElementById('newAvailableFrom').value || null;
+  const type = document.getElementById('newType').value;
+  const monthlyDeposit = type === '적금' ? parseAmt('newMonthlyDeposit') : 0;
   const accountNumber = document.getElementById('newAccNumber').value.trim();
 
-  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, availableFrom, accountNumber, prevBalance: balance };
+  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, availableFrom, type, monthlyDeposit, accountNumber, prevBalance: balance };
   state.accounts.push(newAcc);
 
   if (session.householdId) {
