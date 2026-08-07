@@ -1503,7 +1503,7 @@ function applyWeeklyWealthHistory(rows) {
   );
   if (withBalance.length) {
     state.wealthHistory = withBalance.map(w => ({
-      date: new Date(w.week_start).toLocaleDateString('ko-KR', {month:'short', day:'numeric'}),
+      date: fmtChartDate(new Date(w.week_start)),
       kyungwooAvailable: w.kyungwoo_available_balance || 0,
       kyungwooUnavailable: w.kyungwoo_unavailable_balance || 0,
       saeromAvailable: w.saerom_available_balance || 0,
@@ -1719,6 +1719,12 @@ function totalBalance() {
 function isAccountAvailable(acc, asOf = new Date().toISOString().slice(0,10)) {
   return !acc.availableFrom || acc.availableFrom <= asOf;
 }
+function fmtChartDate(d) {
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const y = d.getFullYear();
+  return y === new Date().getFullYear() ? `${m}/${day}` : `${String(y).slice(2)}.${m}/${day}`;
+}
 function totalRate() {
   const total = totalBalance();
   if (!total) return 0;
@@ -1760,7 +1766,7 @@ function buildAvailabilityProjection() {
     const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
     const sAvail = saeromAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + a.balance, 0);
     return {
-      date: new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' }),
+      date: fmtChartDate(new Date(d)),
       kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
       saeromAvailable: sAvail, saeromUnavailable: sTotal - sAvail,
       ts: new Date(d).getTime(),
