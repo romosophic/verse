@@ -1802,6 +1802,13 @@ function renderChart(period = '1M') {
     if (eok > 0) return `${sign}${eok}억`;
     return `${sign}${man.toLocaleString()}만`;
   };
+  // 짧은 표기: 1억 이상은 소수 첫째 자리 억 단위로 (예: 1.5억)
+  const fmtEokShort = vManwon => {
+    const sign = vManwon < 0 ? '-' : '';
+    const abs = Math.round(Math.abs(vManwon));
+    if (abs >= 10000) return `${sign}${(Math.round(abs / 1000) / 10).toLocaleString()}억`;
+    return `${sign}${abs.toLocaleString()}만`;
+  };
   const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
@@ -1823,11 +1830,27 @@ function renderChart(period = '1M') {
           stack: 'wealth',
           borderRadius: { topRight: 4, bottomRight: 4 },
           borderSkipped: false,
+          datalabels: {
+            labels: {
+              value: {},
+              total: {
+                anchor: 'end', align: 'end', offset: 4, clip: false,
+                font: { family: 'Black Han Sans', size: 10 },
+                color: '#7a7060',
+                formatter: (v, ctx) => {
+                  const pt = data[ctx.dataIndex];
+                  const totalManwon = toManwon(pt.kyungwooAvailable + pt.kyungwooUnavailable + pt.saeromAvailable + pt.saeromUnavailable);
+                  return fmtEokShort(totalManwon);
+                }
+              }
+            }
+          }
         },
       ]
     },
     options: {
       responsive: true,
+      layout: { padding: { right: 34 } },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
@@ -1873,7 +1896,7 @@ function renderChart(period = '1M') {
         x: {
           stacked: true,
           grid: { color: 'rgba(30,26,14,0.1)' },
-          ticks: { color: '#7a7060', font: { size: 10 }, callback: v => fmtEok(v) },
+          ticks: { color: '#7a7060', font: { size: 10 }, callback: v => fmtEokShort(v) },
           border: { display: false }
         },
         y: {
