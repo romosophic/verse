@@ -271,17 +271,21 @@
   .lc-panel-header.k { background: var(--accent); color: #fff; }
   .lc-panel-header.s { background: var(--accent3); color: #fff; }
   .lc-row {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
     font-size: 0.8rem;
   }
   .lc-row:last-child { border-bottom: none; }
-  .lc-row-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lc-row-right { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .lc-bank-tag {
+    align-self: flex-start; font-size: 0.66rem; color: var(--muted);
+    background: var(--surface2); padding: 2px 7px; border-radius: 20px;
+  }
+  .lc-row-name { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lc-row-bal { font-weight: bold; font-size: 0.88rem; }
   .lc-row-bal.k { color: var(--accent2); }
   .lc-row-bal.s { color: var(--accent3); }
-  .lc-row-date { font-size: 0.72rem; color: var(--muted); }
+  .lc-row-meta { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--muted); }
+  .lc-avatar { width: 14px; height: 14px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; }
   .lc-empty { padding: 10px 12px; font-size: 0.8rem; color: var(--muted); }
 
   /* ACCOUNT CARDS */
@@ -2164,13 +2168,12 @@ function renderWeeklySelect(container) {
     accs.sort((a, b) => new Date(b.lastCheckedAt) - new Date(a.lastCheckedAt));
     return accs.map(a => `
       <div class="lc-row">
-        <span class="lc-row-name">${a.bank} ${a.name}</span>
-        <span class="lc-row-right">
-          <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
-          <span class="lc-row-date" style="display:inline-flex;align-items:center;gap:4px;">
-            ${a.lastCheckedBy ? `<span title="${a.lastCheckedBy}" style="width:14px;height:14px;border-radius:50%;background-image:url('${PLAYER_PROFILE[a.lastCheckedBy]}');background-size:cover;background-position:center;flex-shrink:0;"></span>` : ''}
-            ${fmtTs(a.lastCheckedAt)}
-          </span>
+        <span class="lc-bank-tag">${a.bank}</span>
+        <span class="lc-row-name">${a.name}</span>
+        <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
+        <span class="lc-row-meta">
+          ${a.lastCheckedBy ? `<span class="lc-avatar" title="${a.lastCheckedBy}" style="background-image:url('${PLAYER_PROFILE[a.lastCheckedBy]}')"></span>` : ''}
+          ${fmtTs(a.lastCheckedAt)}
         </span>
       </div>`).join('');
   };
