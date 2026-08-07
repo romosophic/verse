@@ -1809,6 +1809,12 @@ function renderChart(period = '1M') {
     if (abs >= 10000) return `${sign}${(Math.round(abs / 1000) / 10).toLocaleString()}억`;
     return `${sign}${abs.toLocaleString()}만`;
   };
+  // 백만 단위, 소수점 최대 3자리 (예: 195.432백만)
+  const fmtMillion3 = vWon => {
+    const sign = vWon < 0 ? '-' : '';
+    const rounded = Math.round(Math.abs(vWon) / 1000) / 1000;
+    return `${sign}${rounded.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}백만`;
+  };
   const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
@@ -1839,8 +1845,8 @@ function renderChart(period = '1M') {
                 color: '#7a7060',
                 formatter: (v, ctx) => {
                   const pt = data[ctx.dataIndex];
-                  const totalManwon = toManwon(pt.kyungwooAvailable + pt.kyungwooUnavailable + pt.saeromAvailable + pt.saeromUnavailable);
-                  return fmtEokShort(totalManwon);
+                  const totalWon = pt.kyungwooAvailable + pt.kyungwooUnavailable + pt.saeromAvailable + pt.saeromUnavailable;
+                  return fmtMillion3(totalWon);
                 }
               }
             }
