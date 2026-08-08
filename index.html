@@ -1809,11 +1809,11 @@ function renderChart(period = '1M') {
     if (abs >= 10000) return `${sign}${(Math.round(abs / 1000) / 10).toLocaleString()}억`;
     return `${sign}${abs.toLocaleString()}만`;
   };
-  // 백만 단위, 소수점 최대 3자리 (예: 195.432백만)
+  // 억 단위, 소수점 최대 3자리 (예: 1.904억)
   const fmtMillion3 = vWon => {
     const sign = vWon < 0 ? '-' : '';
-    const rounded = Math.round(Math.abs(vWon) / 1000) / 1000;
-    return `${sign}${rounded.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}백만`;
+    const rounded = Math.round(Math.abs(vWon) / 100000) / 1000;
+    return `${sign}${rounded.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}억`;
   };
   const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
