@@ -1690,14 +1690,14 @@ function projectedBalance(acc, asOfStr) {
 
 // 오늘 시점의 실제 계좌 잔액으로 만든, 항상 노출되는 "오늘" 데이터 포인트
 function buildTodayPoint() {
-  const kyungwooAccs = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동');
+  const kyungwooAccs = state.accounts.filter(a => a.owner !== '새롬');
   const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
   const kTotal = kyungwooAccs.reduce((s, a) => s + a.balance, 0);
   const sTotal = saeromAccs.reduce((s, a) => s + a.balance, 0);
   const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a)).reduce((s, a) => s + a.balance, 0);
   const sAvail = saeromAccs.filter(a => isAccountAvailable(a)).reduce((s, a) => s + a.balance, 0);
   return {
-    date: fmtChartDate(new Date()),
+    date: '오늘',
     kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
     saeromAvailable: sAvail, saeromUnavailable: sTotal - sAvail,
     ts: Date.now(),
@@ -1711,7 +1711,7 @@ function buildAvailabilityProjection() {
   )].sort();
   if (!futureDates.length) return [];
 
-  const kyungwooAccs = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동');
+  const kyungwooAccs = state.accounts.filter(a => a.owner !== '새롬');
   const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
 
   return futureDates.map(d => {
@@ -1767,7 +1767,11 @@ function renderChart(period = '1M') {
   data = data.filter(d => (d.ts || now) >= sixMonthsAgo);
   const todayStr = new Date().toISOString().slice(0,10);
   const hasToday = data.some(d => d.ts && new Date(d.ts).toISOString().slice(0,10) === todayStr);
-  if (!hasToday && state.accounts.length) data = [...data, buildTodayPoint()];
+  if (!hasToday && state.accounts.length) {
+    data = [...data, buildTodayPoint()];
+  } else {
+    data = data.map(d => (d.ts && new Date(d.ts).toISOString().slice(0,10) === todayStr) ? { ...d, date: '오늘' } : d);
+  }
   data = [...data, ...buildAvailabilityProjection()];
   const canvas = document.getElementById('wealthChart');
   const emptyState = document.getElementById('wealthChartEmpty');
