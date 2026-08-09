@@ -1849,7 +1849,7 @@ function renderChart(period = '1M') {
           data: data.map(d => toManwon(d.kyungwooUnavailable + d.saeromUnavailable)),
           backgroundColor: data.map(d => d.projected ? 'rgba(122,114,96,0.35)' : '#7A7260'),
           stack: 'wealth',
-          borderRadius: { topRight: 4, bottomRight: 4 },
+          borderRadius: { topLeft: 4, topRight: 4 },
           borderSkipped: false,
           datalabels: {
             labels: {
@@ -1871,7 +1871,7 @@ function renderChart(period = '1M') {
     },
     options: {
       responsive: true,
-      layout: { padding: { right: 34 } },
+      layout: { padding: { top: 34 } },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
@@ -1903,27 +1903,27 @@ function renderChart(period = '1M') {
               const isAvail = ctx.datasetIndex === 0;
               const k = toManwon(isAvail ? pt.kyungwooAvailable : pt.kyungwooUnavailable);
               const s = toManwon(isAvail ? pt.saeromAvailable : pt.saeromUnavailable);
-              return `${ctx.dataset.label} ${fmtEok(ctx.parsed.x)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
+              return `${ctx.dataset.label} ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
             },
             footer: items => {
-              const total = items.reduce((s, it) => s + it.parsed.x, 0);
+              const total = items.reduce((s, it) => s + it.parsed.y, 0);
               return `합계  ${fmtEok(total)}원`;
             }
           }
         }
       },
-      indexAxis: 'y',
+      indexAxis: 'x',
       scales: {
         x: {
           stacked: true,
-          grid: { color: 'rgba(30,26,14,0.1)' },
-          ticks: { color: '#7a7060', font: { size: 10 }, callback: v => fmtEokShort(v) },
+          grid: { display: false },
+          ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 10 },
           border: { display: false }
         },
         y: {
           stacked: true,
-          grid: { display: false },
-          ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 10 },
+          grid: { color: 'rgba(30,26,14,0.1)' },
+          ticks: { color: '#7a7060', font: { size: 10 }, callback: v => fmtEokShort(v) },
           border: { display: false }
         }
       }
