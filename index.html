@@ -1010,7 +1010,7 @@
       <select class="form-input" id="newType" style="cursor:pointer;" onchange="toggleMonthlyDepositRow('new')">
         <option value="예금">예금</option>
         <option value="적금">적금</option>
-        <option value="투자">투자</option>
+        <option value="주식">주식</option>
         <option value="기타">기타</option>
       </select>
     </div>
@@ -1056,7 +1056,7 @@
       <select class="form-input" id="editBalanceType" style="cursor:pointer;" onchange="toggleMonthlyDepositRow('editBalance')">
         <option value="예금">예금</option>
         <option value="적금">적금</option>
-        <option value="투자">투자</option>
+        <option value="주식">주식</option>
         <option value="기타">기타</option>
       </select>
     </div>
@@ -1414,6 +1414,7 @@ async function dbLoadAll() {
     availableFrom: a.available_from || null,
     type: a.type || '예금',
     monthlyDeposit: a.monthly_deposit || 0,
+    principal: a.principal ?? a.balance,
     _dbId: a.id,
   }));
 
@@ -1516,6 +1517,7 @@ async function dbSaveAccount(acc) {
     available_from: acc.availableFrom || null,
     type: acc.type || '예금',
     monthly_deposit: acc.monthlyDeposit || null,
+    principal: acc.balance,
   }).select().single();
   if (error) { console.error('account insert error', error); return null; }
   return data;
@@ -1674,6 +1676,19 @@ function totalBalance() {
 }
 function isAccountAvailable(acc, asOf = new Date().toISOString().slice(0,10)) {
   return !acc.availableFrom || acc.availableFrom <= asOf;
+}
+// 원금(최초 등록 잔액) 대비 현재 잔액의 수익률
+function returnPct(acc) {
+  if (!acc.principal) return null;
+  return (acc.balance - acc.principal) / acc.principal * 100;
+}
+function returnPctHtml(acc, size = '0.78rem') {
+  const pct = returnPct(acc);
+  if (pct === null) return '';
+  if (pct === 0) return `<span style="font-size:${size};color:var(--muted)">0%</span>`;
+  const color = pct > 0 ? '#E03F4F' : '#2E6FDE';
+  const sign = pct > 0 ? '+' : '';
+  return `<span style="font-size:${size};font-weight:bold;color:${color}">${sign}${pct.toFixed(1)}%</span>`;
 }
 function fmtChartDate(d) {
   const m = d.getMonth() + 1;
@@ -1968,6 +1983,7 @@ function renderAccounts() {
     { key: 'type', label: '유형' },
     { key: 'rate',  label: '이율', num: true },
     { key: 'availableFrom', label: '가용 시점' },
+    { key: null, label: '수익률', noSort: true },
     { key: null,    label: '', noSort: true },
   ];
 
@@ -1978,7 +1994,7 @@ function renderAccounts() {
   });
 
   const thead = cols.map(c => {
-    if (c.noSort) return `<th style="width:36px"></th>`;
+    if (c.noSort) return c.label ? `<th>${c.label}</th>` : `<th style="width:36px"></th>`;
     const active = _accSort.col === c.key;
     const arrow = active ? (_accSort.dir === 1 ? '▲' : '▼') : '▲';
     return `<th class="${active ? 'sorted' : ''} ${c.num ? 'col-num' : ''}" onclick="sortAccounts('${c.key}')">${c.label}<span class="sort-icon">${arrow}</span></th>`;
@@ -2001,6 +2017,7 @@ function renderAccounts() {
         const label = a.availableFrom ? `${a.availableFrom}${avail ? '' : ' (대기)'}` : '즉시 가용';
         return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:${color}"></span>${label}</span>`;
       })()}</td>
+      <td>${returnPctHtml(a)}</td>
       <td style="text-align:center;padding:0 8px"><button onclick="editAccById('${a.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px;color:var(--muted);transition:all 0.15s" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">✏️</button></td>
     </tr>`;
   }).join('');
@@ -2238,7 +2255,10 @@ function renderWeeklySelect(container) {
       <div class="lc-row">
         <span class="lc-bank-tag">${a.bank}</span>
         <span class="lc-row-name">${a.name}</span>
-        <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="lc-row-bal ${cls}">${fmt(a.balance)}</span>
+          ${returnPctHtml(a)}
+        </span>
         <span class="lc-row-meta">
           ${a.lastCheckedBy ? `<span class="lc-avatar" title="${a.lastCheckedBy}" style="background-image:url('${PLAYER_PROFILE[a.lastCheckedBy]}')"></span>` : ''}
           ${fmtTs(a.lastCheckedAt)}
@@ -2746,7 +2766,7 @@ async function addAccount() {
   const monthlyDeposit = type === '적금' ? parseAmt('newMonthlyDeposit') : 0;
   const accountNumber = document.getElementById('newAccNumber').value.trim();
 
-  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, availableFrom, type, monthlyDeposit, accountNumber, prevBalance: balance };
+  const newAcc = { id: Date.now(), bank, name, balance, rate, owner, availableFrom, type, monthlyDeposit, accountNumber, prevBalance: balance, principal: balance };
   state.accounts.push(newAcc);
 
   if (session.householdId) {
