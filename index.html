@@ -1679,7 +1679,7 @@ function isAccountAvailable(acc, asOf = new Date().toISOString().slice(0,10)) {
 }
 // 원금(최초 등록 잔액) 대비 현재 잔액의 수익률
 function returnPct(acc) {
-  if (!acc.principal) return null;
+  if (acc.type !== '주식' || !acc.principal) return null;
   return (acc.balance - acc.principal) / acc.principal * 100;
 }
 function returnPctHtml(acc, size = '0.78rem') {
