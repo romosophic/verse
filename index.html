@@ -201,10 +201,6 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     line-height: 1;
   }
-  .wealth-ticker {
-    font-size: 0.92rem; color: var(--accent); margin-top: 6px;
-    font-variant-numeric: tabular-nums;
-  }
   .wealth-change {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 0.85rem; color: var(--accent); margin-top: 4px;
@@ -236,23 +232,6 @@
   .period-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
   canvas#wealthChart { width: 100% !important; }
-
-  /* INTEREST TICKER */
-  .interest-ticker {
-    background: linear-gradient(135deg, rgba(129,145,47,0.06), rgba(103,117,37,0.06));
-    border: 1px solid rgba(129,145,47,0.3);
-    border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .ticker-left { display: flex; align-items: center; gap: 12px; }
-  .ticker-icon { font-size: 1.6rem; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
-  .ticker-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 2px; }
-  .ticker-val {
-    font-family: 'MaruMinya', sans-serif; font-size: 1.4rem;
-    color: var(--accent); font-variant-numeric: tabular-nums;
-  }
-  .ticker-rate { font-size: 0.78rem; color: var(--muted); }
 
   /* LAST CHECK (weekly page) */
   .lc-section-title {
@@ -858,7 +837,6 @@
     <div class="total-wealth">
       <div class="wealth-label">총 자산</div>
       <div class="wealth-amount" id="totalWealth">₩0</div>
-      <div class="wealth-ticker" id="interestTicker">이자 실시간 반영 중...</div>
       <div class="wealth-change">▲ 이번달 +₩312,400</div>
     </div>
 
@@ -869,26 +847,10 @@
           <button class="period-btn active" onclick="setPeriod(this,'1M')">1M</button>
           <button class="period-btn" onclick="setPeriod(this,'3M')">3M</button>
           <button class="period-btn" onclick="setPeriod(this,'6M')">6M</button>
-          <button class="period-btn" onclick="setPeriod(this,'1Y')">1Y</button>
         </div>
       </div>
       <canvas id="wealthChart" height="280"></canvas>
       <div id="wealthChartEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">아직 기록된 위클리 데이터가 없어요</div>
-    </div>
-
-    <div class="interest-ticker">
-      <div class="ticker-left">
-        <div class="ticker-icon">💰</div>
-        <div>
-          <div class="ticker-label">오늘 발생 이자</div>
-          <div class="ticker-val" id="todayInterest">₩0.00</div>
-          <div class="ticker-rate" id="tickerRate">연 --% 기준 · 초당 계산</div>
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div class="ticker-label">이번달 예상</div>
-        <div style="font-family:'Black Han Sans',sans-serif; color: var(--gold); font-size:1rem;" id="monthlyInterest">₩0</div>
-      </div>
     </div>
 
   </div>
@@ -1606,7 +1568,6 @@ async function bootApp() {
   renderChart('1M');
   renderAccounts();
   renderTxList('allTxList');
-  startInterestTicker();
   setMode('income');
   if (sb) dbSaveSnapshot().catch(console.error);
   if (sb) loadInviteStatus();
@@ -1664,8 +1625,6 @@ let state = {
     경우: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0 },
     새롬: { done: false, checkedAt: null, recordedBy: null, totalBalance: 0, prevTotal: 0 },
   },
-  startTime: Date.now(),
-  interestAccrued: 0,
   entryMode: 'income',
   lastWeeklyTs: null,
 };
@@ -1695,11 +1654,6 @@ function fmtChartDate(d) {
   const day = d.getDate();
   const y = d.getFullYear();
   return y === new Date().getFullYear() ? `${m}/${day}` : `${String(y).slice(2)}.${m}/${day}`;
-}
-function totalRate() {
-  const total = totalBalance();
-  if (!total) return 0;
-  return state.accounts.reduce((s, a) => s + (a.balance * a.rate / 100), 0);
 }
 function fmt(n, decimals=0) {
   return '₩' + n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -1732,6 +1686,22 @@ function projectedBalance(acc, asOfStr) {
   const maturity = acc.availableFrom ? new Date(acc.availableFrom) : null;
   const cutoff = maturity && maturity < asOf ? maturity : asOf;
   return acc.balance + acc.monthlyDeposit * monthsBetween(today, cutoff);
+}
+
+// 오늘 시점의 실제 계좌 잔액으로 만든, 항상 노출되는 "오늘" 데이터 포인트
+function buildTodayPoint() {
+  const kyungwooAccs = state.accounts.filter(a => a.owner === '경우' || a.owner === '공동');
+  const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
+  const kTotal = kyungwooAccs.reduce((s, a) => s + a.balance, 0);
+  const sTotal = saeromAccs.reduce((s, a) => s + a.balance, 0);
+  const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a)).reduce((s, a) => s + a.balance, 0);
+  const sAvail = saeromAccs.filter(a => isAccountAvailable(a)).reduce((s, a) => s + a.balance, 0);
+  return {
+    date: fmtChartDate(new Date()),
+    kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
+    saeromAvailable: sAvail, saeromUnavailable: sTotal - sAvail,
+    ts: Date.now(),
+  };
 }
 
 function buildAvailabilityProjection() {
@@ -1788,13 +1758,16 @@ function renderChart(period = '1M') {
   } else if (period === '6M') {
     const cutoff = now - 180*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
-  } else if (period === '1Y') {
-    const cutoff = now - 365*24*60*60*1000;
-    data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
   } else {
     const cutoff = now - 30*24*60*60*1000;
     data = state.wealthHistory.filter(d => (d.ts || now) >= cutoff);
   }
+  // 과거 이력은 최대 6개월까지만, 오늘 데이터는 필터와 무관하게 항상 포함
+  const sixMonthsAgo = now - 180*24*60*60*1000;
+  data = data.filter(d => (d.ts || now) >= sixMonthsAgo);
+  const todayStr = new Date().toISOString().slice(0,10);
+  const hasToday = data.some(d => d.ts && new Date(d.ts).toISOString().slice(0,10) === todayStr);
+  if (!hasToday && state.accounts.length) data = [...data, buildTodayPoint()];
   data = [...data, ...buildAvailabilityProjection()];
   const canvas = document.getElementById('wealthChart');
   const emptyState = document.getElementById('wealthChartEmpty');
@@ -1937,26 +1910,6 @@ function setPeriod(btn, p) {
 }
 
 // ===== INTEREST TICKER =====
-function startInterestTicker() {
-  setInterval(() => {
-    const annualInterest = totalRate();
-    const dailyInterest = annualInterest / 365;
-    const perSecond = dailyInterest / 86400;
-    const elapsed = (Date.now() - state.startTime) / 1000;
-    const accrued = perSecond * elapsed;
-    state.interestAccrued = accrued;
-
-    const bal = totalBalance();
-    const effRate = bal > 0 ? (annualInterest / bal * 100) : 0;
-
-    document.getElementById('todayInterest').textContent = fmt(accrued, 2);
-    document.getElementById('totalWealth').textContent = fmt(bal + accrued);
-    document.getElementById('interestTicker').textContent = `💹 초당 +${perSecond.toFixed(4)}원 적립 중`;
-    document.getElementById('monthlyInterest').textContent = fmt(annualInterest / 12);
-    document.getElementById('tickerRate').textContent = `연 ${effRate.toFixed(2)}% 기준 · 초당 계산`;
-  }, 200);
-}
-
 // ===== ACCOUNTS =====
 let _accSort = { col: 'owner', dir: 1 };
 
@@ -1972,6 +1925,8 @@ function sortAccounts(col) {
 }
 
 function renderAccounts() {
+  document.getElementById('totalWealth').textContent = fmt(totalBalance());
+
   const grid = document.getElementById('accountsGrid');
   if (!grid) return;
 
