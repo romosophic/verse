@@ -842,7 +842,7 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">📈 자산 추이</span>
+        <span class="chart-title">📈 자산 추이 <span style="font-size:0.75rem;color:var(--muted);font-weight:normal;">(단위: 억원)</span></span>
         <div class="chart-period-btns">
           <button class="period-btn active" onclick="setPeriod(this,'1M')">1M</button>
           <button class="period-btn" onclick="setPeriod(this,'3M')">3M</button>
@@ -1797,11 +1797,10 @@ function renderChart(period = '1M') {
     if (abs >= 10000) return `${sign}${(Math.round(abs / 1000) / 10).toLocaleString()}억`;
     return `${sign}${abs.toLocaleString()}만`;
   };
-  // 억 단위, 소수점 최대 3자리 (예: 1.904억)
-  const fmtMillion3 = vWon => {
-    const sign = vWon < 0 ? '-' : '';
-    const rounded = Math.round(Math.abs(vWon) / 100000) / 1000;
-    return `${sign}${rounded.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}억`;
+  // 차트 내부 라벨용: 억 단위 숫자만, 소수점 2자리, 단위 텍스트 없음 (예: 1.47)
+  const fmtEokBare = vManwon => {
+    const sign = vManwon < 0 ? '-' : '';
+    return `${sign}${(Math.abs(vManwon) / 10000).toFixed(2)}`;
   };
   const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
@@ -1834,7 +1833,7 @@ function renderChart(period = '1M') {
                 formatter: (v, ctx) => {
                   const pt = data[ctx.dataIndex];
                   const totalWon = pt.kyungwooAvailable + pt.kyungwooUnavailable + pt.saeromAvailable + pt.saeromUnavailable;
-                  return fmtMillion3(totalWon);
+                  return fmtEokBare(toManwon(totalWon));
                 }
               }
             }
@@ -1856,7 +1855,7 @@ function renderChart(period = '1M') {
           anchor: 'center', align: 'center',
           font: { family: 'Black Han Sans', size: 9 },
           color: ctx => data[ctx.dataIndex]?.projected ? '#5c5648' : '#fff',
-          formatter: v => fmtEok(v)
+          formatter: v => fmtEokBare(v)
         },
         tooltip: {
           backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
