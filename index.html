@@ -1065,6 +1065,14 @@
   </div>
 </div>
 
+<!-- MODAL: 과거 위클리 기록 수정 -->
+<div class="modal-overlay" id="weeklyHistoryModal" onclick="if(event.target===this)closeWeeklyHistoryModal()">
+  <div class="modal">
+    <div class="modal-title">과거 기록 수정 <button class="modal-close" onclick="closeWeeklyHistoryModal()">✕</button></div>
+    <div id="weeklyHistoryList" style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
 <!-- ONBOARDING SCREEN -->
 <div id="onboardingScreen" style="
   position:fixed;inset:0;background:var(--bg);z-index:500;
@@ -1508,6 +1516,98 @@ async function dbSaveWeeklyTotalBalance(player, available, unavailable) {
     ? { kyungwoo_available_balance: available, kyungwoo_unavailable_balance: unavailable }
     : { saerom_available_balance: available, saerom_unavailable_balance: unavailable };
   await sb.from('weekly_checks').update(field).eq('id', wc.id);
+  await loadWeeklyWealthHistory();
+  renderChart();
+}
+
+// ===== 과거 위클리 기록 수정 =====
+async function fetchWeeklyChecksRaw() {
+  if (!sb) return [];
+  const { data } = await sb.from('weekly_checks')
+    .select('id, week_start, kyungwoo_available_balance, kyungwoo_unavailable_balance, saerom_available_balance, saerom_unavailable_balance')
+    .eq('household_id', session.householdId)
+    .order('week_start', { ascending: false })
+    .limit(52);
+  return data || [];
+}
+
+let _weeklyHistoryEditingId = null;
+
+async function openWeeklyHistoryModal() {
+  _weeklyHistoryEditingId = null;
+  document.getElementById('weeklyHistoryModal').classList.add('open');
+  await renderWeeklyHistoryList();
+}
+function closeWeeklyHistoryModal() {
+  document.getElementById('weeklyHistoryModal').classList.remove('open');
+}
+
+async function renderWeeklyHistoryList() {
+  const container = document.getElementById('weeklyHistoryList');
+  container.innerHTML = '불러오는 중...';
+  const rows = await fetchWeeklyChecksRaw();
+  if (!rows.length) { container.innerHTML = `<div class="lc-empty">기록 없음</div>`; return; }
+
+  container.innerHTML = rows.map(r => {
+    const kTotal = (r.kyungwoo_available_balance || 0) + (r.kyungwoo_unavailable_balance || 0);
+    const sTotal = (r.saerom_available_balance || 0) + (r.saerom_unavailable_balance || 0);
+
+    if (_weeklyHistoryEditingId !== r.id) {
+      return `
+        <div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:'MaruMinya',sans-serif;font-size:0.95rem;">${r.week_start}</div>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">경우 ${fmt(kTotal)} · 새롬 ${fmt(sTotal)}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button onclick="startEditWeeklyHistory('${r.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;color:var(--muted);">✏️</button>
+            <button onclick="deleteWeeklyHistory('${r.id}')" style="border:none;background:none;cursor:pointer;font-size:1rem;padding:4px 6px;color:var(--danger);">🗑️</button>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div style="border:1px solid var(--accent);border-radius:12px;padding:12px 14px;">
+        <div style="font-family:'MaruMinya',sans-serif;font-size:0.95rem;margin-bottom:10px;">${r.week_start}</div>
+        <div class="form-row"><div class="form-label">경우 가용</div><input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="wh_k_avail" value="${fmtRaw(r.kyungwoo_available_balance || 0)}" /></div>
+        <div class="form-row"><div class="form-label">경우 비가용</div><input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="wh_k_unavail" value="${fmtRaw(r.kyungwoo_unavailable_balance || 0)}" /></div>
+        <div class="form-row"><div class="form-label">새롬 가용</div><input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="wh_s_avail" value="${fmtRaw(r.saerom_available_balance || 0)}" /></div>
+        <div class="form-row"><div class="form-label">새롬 비가용</div><input class="form-input" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" id="wh_s_unavail" value="${fmtRaw(r.saerom_unavailable_balance || 0)}" /></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button onclick="cancelEditWeeklyHistory()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Gowun Dodum',sans-serif;cursor:pointer;">취소</button>
+          <button onclick="saveWeeklyHistoryEdit('${r.id}')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Black Han Sans',sans-serif;cursor:pointer;">저장</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function startEditWeeklyHistory(id) {
+  _weeklyHistoryEditingId = id;
+  renderWeeklyHistoryList();
+}
+function cancelEditWeeklyHistory() {
+  _weeklyHistoryEditingId = null;
+  renderWeeklyHistoryList();
+}
+async function saveWeeklyHistoryEdit(id) {
+  if (!sb) return;
+  const update = {
+    kyungwoo_available_balance: parseAmt('wh_k_avail'),
+    kyungwoo_unavailable_balance: parseAmt('wh_k_unavail'),
+    saerom_available_balance: parseAmt('wh_s_avail'),
+    saerom_unavailable_balance: parseAmt('wh_s_unavail'),
+  };
+  await sb.from('weekly_checks').update(update).eq('id', id);
+  _weeklyHistoryEditingId = null;
+  await renderWeeklyHistoryList();
+  await loadWeeklyWealthHistory();
+  renderChart();
+}
+async function deleteWeeklyHistory(id) {
+  if (!sb) return;
+  if (!confirm('이 주차 기록을 삭제할까요? 되돌릴 수 없어요.')) return;
+  await sb.from('weekly_checks').delete().eq('id', id);
+  await renderWeeklyHistoryList();
   await loadWeeklyWealthHistory();
   renderChart();
 }
@@ -2233,6 +2333,10 @@ function renderWeeklySelect(container) {
         <div class="lc-panel-header s">새롬</div>
         ${makeLastCheck('새롬')}
       </div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;">
+      <button onclick="openWeeklyHistoryModal()" style="border:none;background:none;color:var(--muted);font-family:'MaruMinya',sans-serif;font-size:0.82rem;cursor:pointer;text-decoration:underline;">과거 기록 수정</button>
     </div>
   `;
 }
