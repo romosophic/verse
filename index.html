@@ -1909,11 +1909,11 @@ function showWealthPie(idx) {
   const slices = [
     { label: '가용', value: toManwon(kAvailBase + sAvailBase), color: '#81912F',
       k: toManwon(kAvailBase), s: toManwon(sAvailBase) },
-    { label: '가용 적금예상', value: toManwon(kAvailGrowth + sAvailGrowth), color: 'rgba(129,145,47,0.55)',
+    { label: '가용(E)', value: toManwon(kAvailGrowth + sAvailGrowth), color: 'rgba(129,145,47,0.55)',
       k: toManwon(kAvailGrowth), s: toManwon(sAvailGrowth) },
     { label: '비가용', value: toManwon(kUnavailBase + sUnavailBase), color: '#7A7260',
       k: toManwon(kUnavailBase), s: toManwon(sUnavailBase) },
-    { label: '비가용 적금예상', value: toManwon(kUnavailGrowth + sUnavailGrowth), color: 'rgba(122,114,96,0.55)',
+    { label: '비가용(E)', value: toManwon(kUnavailGrowth + sUnavailGrowth), color: 'rgba(122,114,96,0.55)',
       k: toManwon(kUnavailGrowth), s: toManwon(sUnavailGrowth) },
   ].filter(s => s.value > 0);
 
@@ -2020,7 +2020,7 @@ function renderChart(period = '1M') {
           borderSkipped: 'top',
         },
         {
-          label: '가용 적금예상',
+          label: '가용(E)',
           data: data.map(d => toManwon(d.availableSavingsProjected || 0)),
           backgroundColor: 'transparent',
           stack: 'wealth',
@@ -2041,7 +2041,7 @@ function renderChart(period = '1M') {
           borderSkipped: 'bottom',
         },
         {
-          label: '비가용 적금예상',
+          label: '비가용(E)',
           data: data.map(d => toManwon(d.unavailableSavingsProjected || 0)),
           backgroundColor: 'transparent',
           stack: 'wealth',
@@ -2086,7 +2086,7 @@ function renderChart(period = '1M') {
           display: ctx => ctx.dataset.data[ctx.dataIndex] > 0 ? 'auto' : false,
           anchor: 'center', align: 'center',
           font: { family: 'Black Han Sans', size: 9 },
-          color: ctx => (ctx.dataset.label === '가용 적금예상' || ctx.dataset.label === '비가용 적금예상' || data[ctx.dataIndex]?.projected) ? '#5c5648' : '#fff',
+          color: ctx => (ctx.dataset.label === '가용(E)' || ctx.dataset.label === '비가용(E)' || data[ctx.dataIndex]?.projected) ? '#5c5648' : '#fff',
           formatter: v => fmtEokBare(v)
         },
         tooltip: { enabled: false }
