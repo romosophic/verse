@@ -231,7 +231,8 @@
   }
   .period-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
-  canvas#wealthChart { width: 100% !important; }
+  canvas#wealthChart { width: 100% !important; height: 100% !important; }
+  #wealthChartScroll { scrollbar-width: thin; }
 
   /* LAST CHECK (weekly page) */
   .lc-section-title {
@@ -842,7 +843,11 @@
           <button class="period-btn" onclick="setPeriod(this,'6M')">6M</button>
         </div>
       </div>
-      <canvas id="wealthChart" height="280"></canvas>
+      <div id="wealthChartScroll" style="overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;">
+        <div id="wealthChartInner" style="height:280px;">
+          <canvas id="wealthChart"></canvas>
+        </div>
+      </div>
       <div id="wealthChartEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">아직 기록된 위클리 데이터가 없어요</div>
     </div>
 
@@ -1807,9 +1812,24 @@ function buildTodayPoint() {
 
 function buildAvailabilityProjection() {
   const todayStr = new Date().toISOString().slice(0,10);
-  const futureDates = [...new Set(
-    state.accounts.map(a => a.availableFrom).filter(d => d && d > todayStr)
-  )].sort();
+  const [tY, tM] = todayStr.split('-').map(Number);
+
+  const maturityDates = state.accounts.map(a => a.availableFrom).filter(d => d && d > todayStr);
+
+  // 적금이 아직 납입 중인(만기 전) 계좌는 매달 말일마다 예상치 포인트를 추가로 만든다
+  const monthEndDates = [];
+  state.accounts.forEach(a => {
+    if (a.type !== '적금' || !a.monthlyDeposit || !a.availableFrom || a.availableFrom <= todayStr) return;
+    let y = tY, m = tM - 1; // 0-indexed month, 다음달부터 순회
+    while (true) {
+      const monthEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().slice(0, 10);
+      if (monthEndStr >= a.availableFrom) break;
+      if (monthEndStr > todayStr) monthEndDates.push(monthEndStr);
+      m++;
+    }
+  });
+
+  const futureDates = [...new Set([...maturityDates, ...monthEndDates])].sort();
   if (!futureDates.length) return [];
 
   const kyungwooAccs = state.accounts.filter(a => a.owner !== '새롬');
@@ -1890,15 +1910,22 @@ function renderChart(period = '1M') {
   }
   data = [...data, ...buildAvailabilityProjection()];
   const canvas = document.getElementById('wealthChart');
+  const scrollEl = document.getElementById('wealthChartScroll');
+  const innerEl = document.getElementById('wealthChartInner');
   const emptyState = document.getElementById('wealthChartEmpty');
   if (!data.length) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-    canvas.style.display = 'none';
+    scrollEl.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
-  canvas.style.display = '';
+  scrollEl.style.display = '';
   emptyState.style.display = 'none';
+
+  // 데이터 포인트가 많아지면(적금 매달 말일 예상치 등) 막대 폭을 유지한 채 가로 스크롤
+  const perBarPx = 46;
+  const minWidth = scrollEl.clientWidth || 300;
+  innerEl.style.width = Math.max(minWidth, data.length * perBarPx) + 'px';
 
   const toManwon = v => Math.round(v / 10000);
   const fmtEok = vManwon => {
@@ -1974,6 +2001,7 @@ function renderChart(period = '1M') {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       layout: { padding: { top: 34 } },
       interaction: { mode: 'index', intersect: false },
       plugins: {
@@ -2036,7 +2064,7 @@ function renderChart(period = '1M') {
         x: {
           stacked: true,
           grid: { display: false },
-          ticks: { color: '#7a7060', font: { size: 10 }, maxTicksLimit: 10 },
+          ticks: { color: '#7a7060', font: { size: 10 }, autoSkip: false, maxRotation: 0, minRotation: 0 },
           border: { display: false }
         },
         y: {
