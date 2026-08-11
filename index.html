@@ -1927,10 +1927,10 @@ function showWealthPie(idx) {
     <div style="display:flex;align-items:center;gap:6px;">
       <span style="width:9px;height:9px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
       <span style="flex:1;">${s.label}</span>
-      <span style="font-weight:bold;">${fmtEok(s.value)}원</span>
+      <span style="font-weight:bold;">${fmtEokBare(s.value)}억</span>
     </div>
-    <div style="font-size:0.72rem;color:var(--muted);margin:1px 0 8px 15px;">경우 ${fmtEok(s.k)}·새롬 ${fmtEok(s.s)}</div>
-  `).join('') + `<div style="margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;">합계 ${fmtEok(total)}원</div>`;
+    <div style="font-size:0.72rem;color:var(--muted);margin:1px 0 8px 15px;">경우 ${fmtEokBare(s.k)}억·새롬 ${fmtEokBare(s.s)}억</div>
+  `).join('') + `<div style="margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;">합계 ${fmtEokBare(total)}억</div>`;
 
   const pieCanvas = document.getElementById('wealthPieChart');
   if (pieChartInstance) pieChartInstance.destroy();
