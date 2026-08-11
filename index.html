@@ -852,7 +852,7 @@
       <div id="wealthPieCard" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);">
         <div id="wealthPieTitle" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;"></div>
         <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-          <div style="width:130px;height:130px;flex-shrink:0;"><canvas id="wealthPieChart"></canvas></div>
+          <div style="width:96px;height:96px;flex-shrink:0;"><canvas id="wealthPieChart"></canvas></div>
           <div id="wealthPieLegend" style="flex:1;min-width:170px;font-size:0.82rem;color:var(--text);"></div>
         </div>
       </div>
@@ -1930,10 +1930,10 @@ function showWealthPie(idx) {
         <span style="flex:1;">${s.label}</span>
         <span style="font-weight:bold;">${fmtEok(s.value)}원</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin:2px 0 0 15px;">
+      <div style="display:flex;justify-content:space-between;color:var(--muted);margin:2px 0 0 15px;">
         <span>경우</span><span>${fmtEok(s.k)}원</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin:0 0 0 15px;">
+      <div style="display:flex;justify-content:space-between;color:var(--muted);margin:0 0 0 15px;">
         <span>새롬</span><span>${fmtEok(s.s)}원</span>
       </div>
     </div>
