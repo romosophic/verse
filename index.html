@@ -278,12 +278,8 @@
   .accounts-table th {
     text-align: left; font-size: 0.78rem; color: var(--muted);
     padding: 8px 12px; border-bottom: 2px solid var(--border);
-    cursor: pointer; user-select: none; white-space: nowrap;
+    user-select: none; white-space: nowrap;
   }
-  .accounts-table th:hover { color: var(--text); }
-  .accounts-table th.sorted { color: var(--text); }
-  .accounts-table th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
-  .accounts-table th.sorted .sort-icon { opacity: 1; }
   .accounts-table td {
     padding: 12px 12px; border-bottom: 1px solid var(--border);
     font-size: 0.92rem; vertical-align: middle;
@@ -302,8 +298,6 @@
   .accounts-table .col-owner { font-weight: bold; }
   .accounts-table .col-owner.k { color: var(--accent); }
   .accounts-table .col-owner.s { color: var(--accent3); }
-  .accounts-table .col-rate { text-align: right; color: var(--gold); font-size: 0.85rem; }
-  .accounts-table .col-num { text-align: right; }
   .account-card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; padding: 16px; cursor: pointer;
@@ -919,6 +913,26 @@
     <div class="section-title" style="margin-top:16px">
       자산 현황
       <button onclick="document.getElementById('addAccountModal').classList.add('open')" style="float:right;border:none;background:var(--accent);color:#fff;font-family:'MaruMinya',sans-serif;font-size:0.82rem;padding:4px 12px;border-radius:8px;cursor:pointer;">＋ 추가</button>
+    </div>
+    <div id="accountsToolbar" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <select id="filterOwner" class="form-input" onchange="renderAccounts()" style="width:auto;padding:6px 10px;font-size:0.82rem;cursor:pointer;">
+        <option value="">소유자 전체</option>
+        <option value="경우">경우</option>
+        <option value="새롬">새롬</option>
+        <option value="공동">공동</option>
+      </select>
+      <select id="filterBank" class="form-input" onchange="renderAccounts()" style="width:auto;padding:6px 10px;font-size:0.82rem;cursor:pointer;">
+        <option value="">은행 전체</option>
+      </select>
+      <input id="filterName" class="form-input" placeholder="계좌명 검색" oninput="renderAccounts()" style="width:auto;flex:1;min-width:120px;padding:6px 10px;font-size:0.82rem;" />
+      <select id="filterType" class="form-input" onchange="renderAccounts()" style="width:auto;padding:6px 10px;font-size:0.82rem;cursor:pointer;">
+        <option value="">유형 전체</option>
+        <option value="예금">예금</option>
+        <option value="적금">적금</option>
+        <option value="주식">주식</option>
+        <option value="기타">기타</option>
+      </select>
+      <button id="sortAvailableFromBtn" onclick="sortAccounts('availableFrom')" style="border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'MaruMinya',sans-serif;font-size:0.82rem;padding:6px 10px;border-radius:8px;cursor:pointer;">가용 시점순</button>
     </div>
     <div id="accountsGrid"></div>
 
@@ -2013,42 +2027,56 @@ function renderAccounts() {
   const grid = document.getElementById('accountsGrid');
   if (!grid) return;
 
-  const cols = [
-    { key: 'owner', label: '소유자' },
-    { key: 'bank',  label: '은행' },
-    { key: 'name',  label: '계좌명' },
-    { key: 'accountNumber', label: '계좌번호' },
-    { key: 'type', label: '유형' },
-    { key: 'rate',  label: '이율', num: true },
-    { key: 'availableFrom', label: '가용 시점' },
-    { key: null, label: '수익률', noSort: true },
-    { key: null,    label: '', noSort: true },
-  ];
+  // 은행 필터 옵션을 현재 계좌 목록 기준으로 채움 (선택값 유지)
+  const bankSelect = document.getElementById('filterBank');
+  const prevBank = bankSelect.value;
+  const banks = [...new Set(state.accounts.map(a => a.bank))].sort();
+  bankSelect.innerHTML = `<option value="">은행 전체</option>` + banks.map(b => `<option value="${b}">${b}</option>`).join('');
+  if (banks.includes(prevBank)) bankSelect.value = prevBank;
 
-  const sorted = [...state.accounts].sort((a, b) => {
+  const fOwner = document.getElementById('filterOwner').value;
+  const fBank = document.getElementById('filterBank').value;
+  const fName = document.getElementById('filterName').value.trim().toLowerCase();
+  const fType = document.getElementById('filterType').value;
+
+  let filtered = state.accounts.filter(a =>
+    (!fOwner || a.owner === fOwner) &&
+    (!fBank || a.bank === fBank) &&
+    (!fName || a.name.toLowerCase().includes(fName)) &&
+    (!fType || (a.type || '예금') === fType)
+  );
+
+  filtered.sort((a, b) => {
     const av = a[_accSort.col], bv = b[_accSort.col];
     if (typeof av === 'number') return (av - bv) * _accSort.dir;
-    return String(av).localeCompare(String(bv)) * _accSort.dir;
+    return String(av || '').localeCompare(String(bv || '')) * _accSort.dir;
   });
 
-  const thead = cols.map(c => {
-    if (c.noSort) return c.label ? `<th>${c.label}</th>` : `<th style="width:36px"></th>`;
-    const active = _accSort.col === c.key;
-    const arrow = active ? (_accSort.dir === 1 ? '▲' : '▼') : '▲';
-    return `<th class="${active ? 'sorted' : ''} ${c.num ? 'col-num' : ''}" onclick="sortAccounts('${c.key}')">${c.label}<span class="sort-icon">${arrow}</span></th>`;
-  }).join('');
+  const sortBtn = document.getElementById('sortAvailableFromBtn');
+  sortBtn.textContent = _accSort.col === 'availableFrom' ? `가용 시점순 ${_accSort.dir === 1 ? '▲' : '▼'}` : '가용 시점순';
+  sortBtn.style.borderColor = _accSort.col === 'availableFrom' ? 'var(--accent)' : 'var(--border)';
+  sortBtn.style.color = _accSort.col === 'availableFrom' ? 'var(--text)' : 'var(--muted)';
 
-  const tbody = sorted.map(a => {
+  const thead = `
+    <th>소유자</th>
+    <th>계좌</th>
+    <th>유형</th>
+    <th>가용 시점</th>
+    <th>수익률</th>
+    <th style="width:36px"></th>
+  `;
+
+  const tbody = filtered.map(a => {
     const ok = a.owner === '경우';
     const rowClass = ok ? 'owner-k' : 'owner-s';
     const oc = ok ? 'k' : 's';
     return `<tr class="${rowClass}">
       <td><span class="col-owner ${oc}">${a.owner}</span></td>
-      <td>${a.bank}</td>
-      <td>${a.name}</td>
-      <td style="font-size:0.85rem;color:var(--muted)">${a.accountNumber ? '···' + a.accountNumber.slice(-4) : '—'}</td>
+      <td>
+        <span class="lc-bank-tag">${a.bank}</span>
+        <span class="lc-row-name" style="display:block;margin-top:2px;">${a.name}</span>
+      </td>
       <td style="font-size:0.85rem;color:var(--muted)">${a.type || '예금'}${a.type === '적금' && a.monthlyDeposit ? ` (월${fmt(a.monthlyDeposit)})` : ''}</td>
-      <td class="col-rate">연 ${a.rate}%</td>
       <td>${(() => {
         const avail = isAccountAvailable(a);
         const color = avail ? '#81912F' : '#7A7260';
@@ -2060,7 +2088,7 @@ function renderAccounts() {
     </tr>`;
   }).join('');
 
-  grid.innerHTML = `<table class="accounts-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+  grid.innerHTML = `<table class="accounts-table"><thead><tr>${thead}</tr></thead><tbody>${tbody || `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">조건에 맞는 계좌가 없어요</td></tr>`}</tbody></table>`;
 
   // populate account selects
   const opts = state.accounts.map(a => `<option value="${a.id}">${a.bank} ${a.name}</option>`).join('');
