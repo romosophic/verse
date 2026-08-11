@@ -849,6 +849,13 @@
         </div>
       </div>
       <div id="wealthChartEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">아직 기록된 위클리 데이터가 없어요</div>
+      <div id="wealthPieCard" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);">
+        <div id="wealthPieTitle" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;"></div>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+          <div style="width:130px;height:130px;flex-shrink:0;"><canvas id="wealthPieChart"></canvas></div>
+          <div id="wealthPieLegend" style="flex:1;min-width:170px;font-size:0.82rem;color:var(--text);"></div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1867,24 +1874,84 @@ function buildAvailabilityProjection() {
 
 // ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
 let chartInstance = null;
-let _wealthTooltipDismissBound = false;
-function bindWealthTooltipDismiss() {
-  if (_wealthTooltipDismissBound) return;
-  _wealthTooltipDismissBound = true;
-  const dismiss = e => {
-    if (!chartInstance) return;
-    const canvas = document.getElementById('wealthChart');
-    if (canvas && !canvas.contains(e.target)) {
-      chartInstance.setActiveElements([]);
-      chartInstance.tooltip?.setActiveElements([], { x: 0, y: 0 });
-      chartInstance.update();
+let pieChartInstance = null;
+let _chartPoints = [];
+const toManwon = v => Math.round(v / 10000);
+const fmtEok = vManwon => {
+  const sign = vManwon < 0 ? '-' : '';
+  const abs = Math.round(Math.abs(vManwon));
+  const eok = Math.floor(abs / 10000);
+  const man = abs % 10000;
+  if (eok > 0 && man > 0) return `${sign}${eok}억 ${man.toLocaleString()}만`;
+  if (eok > 0) return `${sign}${eok}억`;
+  return `${sign}${man.toLocaleString()}만`;
+};
+// 차트 내부 라벨용: 억 단위 숫자만, 소수점 2자리, 단위 텍스트 없음 (예: 1.47)
+const fmtEokBare = vManwon => {
+  const sign = vManwon < 0 ? '-' : '';
+  return `${sign}${(Math.abs(vManwon) / 10000).toFixed(2)}`;
+};
+// 탭한 막대의 구성을 하단 파이차트로 보여준다 (기존 툴팁 내용을 대체)
+function showWealthPie(idx) {
+  const pt = _chartPoints[idx];
+  const card = document.getElementById('wealthPieCard');
+  if (!pt) { card.style.display = 'none'; return; }
+
+  const kAvailGrowth = pt.kyungwooAvailableGrowth || 0;
+  const sAvailGrowth = pt.saeromAvailableGrowth || 0;
+  const kUnavailGrowth = pt.kyungwooUnavailableGrowth || 0;
+  const sUnavailGrowth = pt.saeromUnavailableGrowth || 0;
+  const kAvailBase = pt.kyungwooAvailable - kAvailGrowth;
+  const sAvailBase = pt.saeromAvailable - sAvailGrowth;
+  const kUnavailBase = pt.kyungwooUnavailable - kUnavailGrowth;
+  const sUnavailBase = pt.saeromUnavailable - sUnavailGrowth;
+
+  const slices = [
+    { label: '가용', value: toManwon(kAvailBase + sAvailBase), color: '#81912F',
+      k: toManwon(kAvailBase), s: toManwon(sAvailBase) },
+    { label: '가용 적금예상', value: toManwon(kAvailGrowth + sAvailGrowth), color: 'rgba(129,145,47,0.55)',
+      k: toManwon(kAvailGrowth), s: toManwon(sAvailGrowth) },
+    { label: '비가용', value: toManwon(kUnavailBase + sUnavailBase), color: '#7A7260',
+      k: toManwon(kUnavailBase), s: toManwon(sUnavailBase) },
+    { label: '비가용 적금예상', value: toManwon(kUnavailGrowth + sUnavailGrowth), color: 'rgba(122,114,96,0.55)',
+      k: toManwon(kUnavailGrowth), s: toManwon(sUnavailGrowth) },
+  ].filter(s => s.value > 0);
+
+  if (!slices.length) { card.style.display = 'none'; return; }
+
+  card.style.display = 'block';
+  document.getElementById('wealthPieTitle').textContent = pt.projected ? `${pt.date} (예상) 자산 구성` : `${pt.date} 자산 구성`;
+
+  const total = slices.reduce((s, x) => s + x.value, 0);
+  document.getElementById('wealthPieLegend').innerHTML = slices.map(s => `
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:9px;height:9px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
+      <span style="flex:1;">${s.label}</span>
+      <span style="font-weight:bold;">${fmtEok(s.value)}원</span>
+    </div>
+    <div style="font-size:0.72rem;color:var(--muted);margin:1px 0 8px 15px;">경우 ${fmtEok(s.k)}·새롬 ${fmtEok(s.s)}</div>
+  `).join('') + `<div style="margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;">합계 ${fmtEok(total)}원</div>`;
+
+  const pieCanvas = document.getElementById('wealthPieChart');
+  if (pieChartInstance) pieChartInstance.destroy();
+  pieChartInstance = new Chart(pieCanvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: slices.map(s => s.label),
+      datasets: [{ data: slices.map(s => s.value), backgroundColor: slices.map(s => s.color), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        datalabels: { display: false }
+      }
     }
-  };
-  document.addEventListener('touchstart', dismiss, { passive: true });
-  document.addEventListener('click', dismiss);
+  });
 }
 function renderChart(period = '1M') {
-  bindWealthTooltipDismiss();
   let data = state.wealthHistory;
   const now = Date.now();
 
@@ -1926,22 +1993,9 @@ function renderChart(period = '1M') {
   const perBarPx = 46;
   const minWidth = scrollEl.clientWidth || 300;
   innerEl.style.width = Math.max(minWidth, data.length * perBarPx) + 'px';
+  _chartPoints = data;
+  document.getElementById('wealthPieCard').style.display = 'none';
 
-  const toManwon = v => Math.round(v / 10000);
-  const fmtEok = vManwon => {
-    const sign = vManwon < 0 ? '-' : '';
-    const abs = Math.round(Math.abs(vManwon));
-    const eok = Math.floor(abs / 10000);
-    const man = abs % 10000;
-    if (eok > 0 && man > 0) return `${sign}${eok}억 ${man.toLocaleString()}만`;
-    if (eok > 0) return `${sign}${eok}억`;
-    return `${sign}${man.toLocaleString()}만`;
-  };
-  // 차트 내부 라벨용: 억 단위 숫자만, 소수점 2자리, 단위 텍스트 없음 (예: 1.47)
-  const fmtEokBare = vManwon => {
-    const sign = vManwon < 0 ? '-' : '';
-    return `${sign}${(Math.abs(vManwon) / 10000).toFixed(2)}`;
-  };
   const ctx = canvas.getContext('2d');
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
@@ -2019,45 +2073,11 @@ function renderChart(period = '1M') {
           color: ctx => (ctx.dataset.label === '가용 적금예상' || ctx.dataset.label === '비가용 적금예상' || data[ctx.dataIndex]?.projected) ? '#5c5648' : '#fff',
           formatter: v => fmtEokBare(v)
         },
-        tooltip: {
-          backgroundColor: '#171310', borderColor: '#2e231a', borderWidth: 1,
-          titleColor: '#9b9080', bodyColor: '#9CC6DB',
-          titleFont: { size: 11 },
-          bodyFont: { family: 'Black Han Sans', size: 10 },
-          footerFont: { size: 10 },
-          padding: 8,
-          boxPadding: 4,
-          filter: item => item.parsed.y !== 0,
-          callbacks: {
-            title: items => {
-              const label = items[0]?.label || '';
-              return data[items[0]?.dataIndex]?.projected ? `${label} (예상)` : label;
-            },
-            label: ctx => {
-              const pt = data[ctx.dataIndex];
-              const label = ctx.dataset.label;
-              if (label === '가용') {
-                const k = toManwon(pt.kyungwooAvailable - (pt.kyungwooAvailableGrowth || 0));
-                const s = toManwon(pt.saeromAvailable - (pt.saeromAvailableGrowth || 0));
-                return `가용 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
-              }
-              if (label === '비가용') {
-                const k = toManwon(pt.kyungwooUnavailable - (pt.kyungwooUnavailableGrowth || 0));
-                const s = toManwon(pt.saeromUnavailable - (pt.saeromUnavailableGrowth || 0));
-                return `비가용 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
-              }
-              // 가용 적금예상 / 비가용 적금예상
-              const isAvail = label === '가용 적금예상';
-              const k = toManwon(isAvail ? (pt.kyungwooAvailableGrowth || 0) : (pt.kyungwooUnavailableGrowth || 0));
-              const s = toManwon(isAvail ? (pt.saeromAvailableGrowth || 0) : (pt.saeromUnavailableGrowth || 0));
-              return `적금 예상 증가 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
-            },
-            footer: items => {
-              const total = items.reduce((s, it) => s + it.parsed.y, 0);
-              return `합계  ${fmtEok(total)}원`;
-            }
-          }
-        }
+        tooltip: { enabled: false }
+      },
+      onClick: (evt, _els, chart) => {
+        const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, false);
+        if (pts.length) showWealthPie(pts[0].index);
       },
       indexAxis: 'x',
       scales: {
