@@ -1815,15 +1815,30 @@ function buildAvailabilityProjection() {
   const kyungwooAccs = state.accounts.filter(a => a.owner !== '새롬');
   const saeromAccs = state.accounts.filter(a => a.owner === '새롬');
 
+  // 계좌들을 가용 여부로 나눠 {base(현재잔액), growth(적금 예상 증가분)} 합계를 구한다
+  const splitSum = (accs, d, wantAvailable) => accs
+    .filter(a => isAccountAvailable(a, d) === wantAvailable)
+    .reduce((acc, a) => {
+      const proj = projectedBalance(a, d);
+      acc.base += a.balance;
+      acc.growth += proj - a.balance;
+      return acc;
+    }, { base: 0, growth: 0 });
+
   return futureDates.map(d => {
-    const kTotal = kyungwooAccs.reduce((s, a) => s + projectedBalance(a, d), 0);
-    const sTotal = saeromAccs.reduce((s, a) => s + projectedBalance(a, d), 0);
-    const kAvail = kyungwooAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + projectedBalance(a, d), 0);
-    const sAvail = saeromAccs.filter(a => isAccountAvailable(a, d)).reduce((s, a) => s + projectedBalance(a, d), 0);
+    const kAvail = splitSum(kyungwooAccs, d, true);
+    const kUnavail = splitSum(kyungwooAccs, d, false);
+    const sAvail = splitSum(saeromAccs, d, true);
+    const sUnavail = splitSum(saeromAccs, d, false);
     return {
       date: fmtChartDate(new Date(d)),
-      kyungwooAvailable: kAvail, kyungwooUnavailable: kTotal - kAvail,
-      saeromAvailable: sAvail, saeromUnavailable: sTotal - sAvail,
+      kyungwooAvailable: kAvail.base + kAvail.growth, kyungwooUnavailable: kUnavail.base + kUnavail.growth,
+      saeromAvailable: sAvail.base + sAvail.growth, saeromUnavailable: sUnavail.base + sUnavail.growth,
+      // 적금 예상 증가분만 따로 (인물별 + 합산)
+      kyungwooAvailableGrowth: kAvail.growth, saeromAvailableGrowth: sAvail.growth,
+      kyungwooUnavailableGrowth: kUnavail.growth, saeromUnavailableGrowth: sUnavail.growth,
+      availableSavingsProjected: kAvail.growth + sAvail.growth,
+      unavailableSavingsProjected: kUnavail.growth + sUnavail.growth,
       ts: new Date(d).getTime(),
       projected: true,
     };
@@ -1909,15 +1924,33 @@ function renderChart(period = '1M') {
       datasets: [
         {
           label: '가용',
-          data: data.map(d => toManwon(d.kyungwooAvailable + d.saeromAvailable)),
+          data: data.map(d => toManwon((d.kyungwooAvailable + d.saeromAvailable) - (d.availableSavingsProjected || 0))),
           backgroundColor: data.map(d => d.projected ? 'rgba(129,145,47,0.45)' : '#81912F'),
           stack: 'wealth',
           borderSkipped: false,
         },
         {
+          label: '가용 적금예상',
+          data: data.map(d => toManwon(d.availableSavingsProjected || 0)),
+          backgroundColor: 'transparent',
+          borderColor: '#81912F',
+          borderWidth: 1.5,
+          stack: 'wealth',
+          borderSkipped: false,
+        },
+        {
           label: '비가용',
-          data: data.map(d => toManwon(d.kyungwooUnavailable + d.saeromUnavailable)),
+          data: data.map(d => toManwon((d.kyungwooUnavailable + d.saeromUnavailable) - (d.unavailableSavingsProjected || 0))),
           backgroundColor: data.map(d => d.projected ? 'rgba(122,114,96,0.35)' : '#7A7260'),
+          stack: 'wealth',
+          borderSkipped: false,
+        },
+        {
+          label: '비가용 적금예상',
+          data: data.map(d => toManwon(d.unavailableSavingsProjected || 0)),
+          backgroundColor: 'transparent',
+          borderColor: '#7A7260',
+          borderWidth: 1.5,
           stack: 'wealth',
           borderRadius: { topLeft: 4, topRight: 4 },
           borderSkipped: false,
@@ -1946,13 +1979,16 @@ function renderChart(period = '1M') {
       plugins: {
         legend: {
           display: true, position: 'top', align: 'end',
-          labels: { color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 10 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' }
+          labels: {
+            color: '#7a7060', font: { family: "'MaruMinya', sans-serif", size: 10 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle',
+            filter: item => item.text === '가용' || item.text === '비가용'
+          }
         },
         datalabels: {
           display: ctx => ctx.dataset.data[ctx.dataIndex] > 0 ? 'auto' : false,
           anchor: 'center', align: 'center',
           font: { family: 'Black Han Sans', size: 9 },
-          color: ctx => data[ctx.dataIndex]?.projected ? '#5c5648' : '#fff',
+          color: ctx => (ctx.dataset.label === '가용 적금예상' || ctx.dataset.label === '비가용 적금예상' || data[ctx.dataIndex]?.projected) ? '#5c5648' : '#fff',
           formatter: v => fmtEokBare(v)
         },
         tooltip: {
@@ -1963,6 +1999,7 @@ function renderChart(period = '1M') {
           footerFont: { size: 10 },
           padding: 8,
           boxPadding: 4,
+          filter: item => item.parsed.y !== 0,
           callbacks: {
             title: items => {
               const label = items[0]?.label || '';
@@ -1970,10 +2007,22 @@ function renderChart(period = '1M') {
             },
             label: ctx => {
               const pt = data[ctx.dataIndex];
-              const isAvail = ctx.datasetIndex === 0;
-              const k = toManwon(isAvail ? pt.kyungwooAvailable : pt.kyungwooUnavailable);
-              const s = toManwon(isAvail ? pt.saeromAvailable : pt.saeromUnavailable);
-              return `${ctx.dataset.label} ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
+              const label = ctx.dataset.label;
+              if (label === '가용') {
+                const k = toManwon(pt.kyungwooAvailable - (pt.kyungwooAvailableGrowth || 0));
+                const s = toManwon(pt.saeromAvailable - (pt.saeromAvailableGrowth || 0));
+                return `가용 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
+              }
+              if (label === '비가용') {
+                const k = toManwon(pt.kyungwooUnavailable - (pt.kyungwooUnavailableGrowth || 0));
+                const s = toManwon(pt.saeromUnavailable - (pt.saeromUnavailableGrowth || 0));
+                return `비가용 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
+              }
+              // 가용 적금예상 / 비가용 적금예상
+              const isAvail = label === '가용 적금예상';
+              const k = toManwon(isAvail ? (pt.kyungwooAvailableGrowth || 0) : (pt.kyungwooUnavailableGrowth || 0));
+              const s = toManwon(isAvail ? (pt.saeromAvailableGrowth || 0) : (pt.saeromUnavailableGrowth || 0));
+              return `적금 예상 증가 ${fmtEok(ctx.parsed.y)}원 (경우${fmtEok(k)}·새롬${fmtEok(s)})`;
             },
             footer: items => {
               const total = items.reduce((s, it) => s + it.parsed.y, 0);
