@@ -1923,22 +1923,21 @@ function showWealthPie(idx) {
   document.getElementById('wealthPieTitle').textContent = pt.projected ? `${pt.date} (예상) 자산 구성` : `${pt.date} 자산 구성`;
 
   const total = slices.reduce((s, x) => s + x.value, 0);
-  const fmtEok3 = vManwon => `${vManwon < 0 ? '-' : ''}${(Math.abs(vManwon) / 10000).toFixed(3)}`;
   document.getElementById('wealthPieLegend').innerHTML = slices.map(s => `
     <div style="margin-bottom:8px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="width:9px;height:9px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
         <span style="flex:1;">${s.label}</span>
-        <span style="font-weight:bold;">${fmtEok3(s.value)}억</span>
+        <span style="font-weight:bold;">${fmtEok(s.value)}원</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin:2px 0 0 15px;">
-        <span>경우</span><span>${fmtEok3(s.k)}억</span>
+        <span>경우</span><span>${fmtEok(s.k)}원</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin:0 0 0 15px;">
-        <span>새롬</span><span>${fmtEok3(s.s)}억</span>
+        <span>새롬</span><span>${fmtEok(s.s)}원</span>
       </div>
     </div>
-  `).join('') + `<div style="display:flex;justify-content:space-between;margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;"><span>합계</span><span>${fmtEok3(total)}억</span></div>`;
+  `).join('') + `<div style="display:flex;justify-content:space-between;margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;"><span>합계</span><span>${fmtEok(total)}원</span></div>`;
 
   const pieCanvas = document.getElementById('wealthPieChart');
   if (pieChartInstance) pieChartInstance.destroy();
