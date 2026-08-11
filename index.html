@@ -2019,6 +2019,11 @@ function renderChart(period = '1M') {
           backgroundColor: 'transparent',
           stack: 'wealth',
           borderSkipped: false,
+          datalabels: {
+            // 자산 규모 대비 적금 증가분이 작아 막대가 눈에 안 보여도 수치는 항상 표시
+            display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+            clip: false,
+          }
         },
         {
           label: '비가용',
@@ -2038,7 +2043,11 @@ function renderChart(period = '1M') {
           borderSkipped: false,
           datalabels: {
             labels: {
-              value: {},
+              value: {
+                // 자산 규모 대비 적금 증가분이 작아 막대가 눈에 안 보여도 수치는 항상 표시
+                display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                clip: false,
+              },
               total: {
                 anchor: 'end', align: 'end', offset: 4, clip: false,
                 font: { family: 'Black Han Sans', size: 10 },
