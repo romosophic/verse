@@ -1876,6 +1876,8 @@ function buildAvailabilityProjection() {
 let chartInstance = null;
 let pieChartInstance = null;
 let _chartPoints = [];
+let _pieActiveIdx = null;
+let _pieExpanded = new Set();
 const toManwon = v => Math.round(v / 10000);
 const fmtEok = vManwon => {
   const sign = vManwon < 0 ? '-' : '';
@@ -1891,8 +1893,48 @@ const fmtEokBare = vManwon => {
   const sign = vManwon < 0 ? '-' : '';
   return `${sign}${(Math.abs(vManwon) / 10000).toFixed(2)}`;
 };
+// 경우/새롬 금액 한 줄을 누르면 그 금액을 구성하는 자산 항목 목록을 펼친다
+function togglePieBreakdown(key) {
+  if (_pieExpanded.has(key)) _pieExpanded.delete(key);
+  else _pieExpanded.add(key);
+  showWealthPie(_pieActiveIdx);
+}
+function pieAccountBreakdown(pt, kind, ownerKey) {
+  const wantAvailable = kind === 'avail' || kind === 'availE';
+  const wantGrowth = kind === 'availE' || kind === 'unavailE';
+  const dateStr = pt.ts ? new Date(pt.ts).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+  const accs = ownerKey === 'k' ? state.accounts.filter(a => a.owner !== '새롬') : state.accounts.filter(a => a.owner === '새롬');
+  return accs
+    .filter(a => isAccountAvailable(a, dateStr) === wantAvailable)
+    .map(a => ({ bank: a.bank, name: a.name, amount: wantGrowth ? projectedBalance(a, dateStr) - a.balance : a.balance }))
+    .filter(a => Math.round(a.amount) !== 0)
+    .sort((a, b) => b.amount - a.amount);
+}
+function pieOwnerRow(pt, label, amountManwon, kind, ownerKey) {
+  if (Math.round(amountManwon) === 0) {
+    return `<div style="display:flex;justify-content:space-between;color:var(--muted);margin:2px 0 0 15px;"><span>${label}</span><span>${fmtEok(amountManwon)}원</span></div>`;
+  }
+  const key = `${kind}_${ownerKey}`;
+  const expanded = _pieExpanded.has(key);
+  const rows = expanded ? pieAccountBreakdown(pt, kind, ownerKey) : [];
+  const breakdownHtml = expanded ? `
+    <div style="margin:2px 0 4px 15px;padding:4px 8px;background:var(--surface2);border-radius:6px;">
+      ${rows.length ? rows.map(r => `
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:0.76rem;color:var(--muted);">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.bank} ${r.name}</span>
+          <span style="flex-shrink:0;">${fmtEok(toManwon(r.amount))}원</span>
+        </div>`).join('') : `<div style="font-size:0.76rem;color:var(--muted);padding:2px 0;">내역 없음</div>`}
+    </div>` : '';
+  return `
+    <div style="display:flex;justify-content:space-between;color:var(--muted);margin:2px 0 0 15px;cursor:pointer;" onclick="togglePieBreakdown('${key}')">
+      <span>${label} ${expanded ? '▲' : '▼'}</span><span>${fmtEok(amountManwon)}원</span>
+    </div>
+    ${breakdownHtml}`;
+}
 // 탭한 막대의 구성을 하단 파이차트로 보여준다 (기존 툴팁 내용을 대체)
 function showWealthPie(idx) {
+  if (idx !== _pieActiveIdx) _pieExpanded.clear();
+  _pieActiveIdx = idx;
   const pt = _chartPoints[idx];
   const card = document.getElementById('wealthPieCard');
   if (!pt) { card.style.display = 'none'; return; }
@@ -1907,13 +1949,13 @@ function showWealthPie(idx) {
   const sUnavailBase = pt.saeromUnavailable - sUnavailGrowth;
 
   const slices = [
-    { label: '가용', value: toManwon(kAvailBase + sAvailBase), color: '#81912F',
+    { label: '가용', kind: 'avail', value: toManwon(kAvailBase + sAvailBase), color: '#81912F',
       k: toManwon(kAvailBase), s: toManwon(sAvailBase) },
-    { label: '가용(E)', value: toManwon(kAvailGrowth + sAvailGrowth), color: 'rgba(129,145,47,0.55)',
+    { label: '가용(E)', kind: 'availE', value: toManwon(kAvailGrowth + sAvailGrowth), color: 'rgba(129,145,47,0.55)',
       k: toManwon(kAvailGrowth), s: toManwon(sAvailGrowth) },
-    { label: '비가용', value: toManwon(kUnavailBase + sUnavailBase), color: '#7A7260',
+    { label: '비가용', kind: 'unavail', value: toManwon(kUnavailBase + sUnavailBase), color: '#7A7260',
       k: toManwon(kUnavailBase), s: toManwon(sUnavailBase) },
-    { label: '비가용(E)', value: toManwon(kUnavailGrowth + sUnavailGrowth), color: 'rgba(122,114,96,0.55)',
+    { label: '비가용(E)', kind: 'unavailE', value: toManwon(kUnavailGrowth + sUnavailGrowth), color: 'rgba(122,114,96,0.55)',
       k: toManwon(kUnavailGrowth), s: toManwon(sUnavailGrowth) },
   ].filter(s => s.value > 0);
 
@@ -1930,12 +1972,8 @@ function showWealthPie(idx) {
         <span style="flex:1;">${s.label}</span>
         <span style="font-weight:bold;">${fmtEok(s.value)}원</span>
       </div>
-      <div style="display:flex;justify-content:space-between;color:var(--muted);margin:2px 0 0 15px;">
-        <span>경우</span><span>${fmtEok(s.k)}원</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;color:var(--muted);margin:0 0 0 15px;">
-        <span>새롬</span><span>${fmtEok(s.s)}원</span>
-      </div>
+      ${pieOwnerRow(pt, '경우', s.k, s.kind, 'k')}
+      ${pieOwnerRow(pt, '새롬', s.s, s.kind, 's')}
     </div>
   `).join('') + `<div style="display:flex;justify-content:space-between;margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;"><span>합계</span><span>${fmtEok(total)}원</span></div>`;
 
@@ -2001,6 +2039,8 @@ function renderChart(period = '1M') {
   const minWidth = scrollEl.clientWidth || 300;
   innerEl.style.width = Math.max(minWidth, data.length * perBarPx) + 'px';
   _chartPoints = data;
+  _pieActiveIdx = null;
+  _pieExpanded.clear();
   document.getElementById('wealthPieCard').style.display = 'none';
 
   const ctx = canvas.getContext('2d');
