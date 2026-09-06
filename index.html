@@ -1933,7 +1933,9 @@ function pieOwnerRow(pt, label, amountManwon, kind, ownerKey) {
 }
 // 탭한 막대의 구성을 하단 파이차트로 보여준다 (기존 툴팁 내용을 대체)
 function showWealthPie(idx) {
-  if (idx !== _pieActiveIdx) _pieExpanded.clear();
+  if (idx !== _pieActiveIdx) {
+    _pieExpanded = new Set(['avail', 'availE', 'unavail', 'unavailE'].flatMap(kind => [`${kind}_k`, `${kind}_s`]));
+  }
   _pieActiveIdx = idx;
   const pt = _chartPoints[idx];
   const card = document.getElementById('wealthPieCard');
