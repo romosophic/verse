@@ -1926,12 +1926,13 @@ function pieOwnerRow(pt, label, amountManwon, kind, ownerKey) {
   const key = `${kind}_${ownerKey}`;
   const expanded = _pieExpanded.has(key);
   const rows = expanded ? pieAccountBreakdown(pt, kind, ownerKey) : [];
+  const editable = pt.date === '오늘'; // 미래 예상치/과거 기록은 수정 개념이 애매해 오늘 시점만 수정 허용
   const breakdownHtml = expanded ? `
     <div style="margin:2px 0 4px 15px;padding:4px 8px;background:var(--surface2);border-radius:6px;">
       ${rows.length ? rows.map(r => `
-        <div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:0.76rem;color:var(--muted);cursor:pointer;" onclick="openChartAccountEdit('${r.id}')">
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:0.76rem;color:var(--muted);${editable ? 'cursor:pointer;' : ''}" ${editable ? `onclick="openChartAccountEdit('${r.id}')"` : ''}>
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.bank} ${r.name}</span>
-          <span style="flex-shrink:0;">${fmtEok(toManwon(r.amount))}원 ✏️</span>
+          <span style="flex-shrink:0;">${fmtEok(toManwon(r.amount))}원${editable ? ' ✏️' : ''}</span>
         </div>`).join('') : `<div style="font-size:0.76rem;color:var(--muted);padding:2px 0;">내역 없음</div>`}
     </div>` : '';
   return `
