@@ -1078,6 +1078,14 @@
 <!-- MODAL: 자동감지 지출 -->
 <div class="modal-overlay" id="autoDeductModal"></div>
 
+<!-- MODAL: 차트 상세에서 계좌 바로 수정 (위클리 체크와 동일 기능) -->
+<div class="modal-overlay" id="chartAccountEditModal" onclick="if(event.target===this)closeChartAccountEditModal()">
+  <div class="modal">
+    <div class="modal-title">잔액 수정 <button class="modal-close" onclick="closeChartAccountEditModal()">✕</button></div>
+    <div id="chartAccountEditCard"></div>
+  </div>
+</div>
+
 <!-- MODAL: 과거 위클리 기록 수정 -->
 <div class="modal-overlay" id="weeklyHistoryModal" onclick="if(event.target===this)closeWeeklyHistoryModal()">
   <div class="modal">
@@ -1878,6 +1886,7 @@ let pieChartInstance = null;
 let _chartPoints = [];
 let _pieActiveIdx = null;
 let _pieExpanded = new Set();
+let _chartEditAccountId = null;
 const toManwon = v => Math.round(v / 10000);
 const fmtEok = vManwon => {
   const sign = vManwon < 0 ? '-' : '';
@@ -1906,7 +1915,7 @@ function pieAccountBreakdown(pt, kind, ownerKey) {
   const accs = ownerKey === 'k' ? state.accounts.filter(a => a.owner !== '새롬') : state.accounts.filter(a => a.owner === '새롬');
   return accs
     .filter(a => isAccountAvailable(a, dateStr) === wantAvailable)
-    .map(a => ({ bank: a.bank, name: a.name, amount: wantGrowth ? projectedBalance(a, dateStr) - a.balance : a.balance }))
+    .map(a => ({ id: a.id, bank: a.bank, name: a.name, amount: wantGrowth ? projectedBalance(a, dateStr) - a.balance : a.balance }))
     .filter(a => Math.round(a.amount) !== 0)
     .sort((a, b) => b.amount - a.amount);
 }
@@ -1920,9 +1929,9 @@ function pieOwnerRow(pt, label, amountManwon, kind, ownerKey) {
   const breakdownHtml = expanded ? `
     <div style="margin:2px 0 4px 15px;padding:4px 8px;background:var(--surface2);border-radius:6px;">
       ${rows.length ? rows.map(r => `
-        <div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:0.76rem;color:var(--muted);">
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:0.76rem;color:var(--muted);cursor:pointer;" onclick="openChartAccountEdit('${r.id}')">
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.bank} ${r.name}</span>
-          <span style="flex-shrink:0;">${fmtEok(toManwon(r.amount))}원</span>
+          <span style="flex-shrink:0;">${fmtEok(toManwon(r.amount))}원 ✏️</span>
         </div>`).join('') : `<div style="font-size:0.76rem;color:var(--muted);padding:2px 0;">내역 없음</div>`}
     </div>` : '';
   return `
@@ -2649,9 +2658,12 @@ function confirmQA(accountIdx) {
 
 // pending manual additions inside the modal (before finalizeQA)
 let modalPendingExpenses = [];
+// 차트 상세에서 계좌를 수정 중일 때 true (확인 시 finalizeQA 대신 finalizeChartAccountEdit 호출)
+let _autoDeductFromChart = false;
 
-function showAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalance) {
+function showAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalance, fromChart = false) {
   modalPendingExpenses = [];
+  _autoDeductFromChart = fromChart;
   _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalance);
   document.getElementById('autoDeductModal').classList.add('open');
 }
@@ -2750,7 +2762,7 @@ function _renderAutoDeductModal(acc, totalDiff, manualOut, accountIdx, newBalanc
         </div>
       </div>
 
-      <button class="confirm-deduct-btn" onclick="finalizeQA(${accountIdx}, ${newBalance})">✅ 확인하고 업데이트</button>
+      <button class="confirm-deduct-btn" onclick="${_autoDeductFromChart ? 'finalizeChartAccountEdit' : 'finalizeQA'}(${accountIdx}, ${newBalance})">✅ 확인하고 업데이트</button>
     </div>
   `;
 }
@@ -2787,11 +2799,12 @@ function removeModalExpense(idx, accountIdx, newBalance) {
 
 function closeAutoModal() {
   document.getElementById('autoDeductModal').classList.remove('open');
+  _autoDeductFromChart = false;
 }
 
-function finalizeQA(accountIdx, newBalance) {
+// 미확정 지출(직접 추가분 + 자동감지분)을 거래 내역에 커밋한다 (finalizeQA / finalizeChartAccountEdit 공용)
+function commitAutoDeductExpenses(acc, newBalance) {
   const autoChk = document.getElementById('autoChk');
-  const acc = state.accounts[accountIdx];
   const prev = acc.prevBalance ?? acc.balance;
   const manualOut = weeklyManualExpenses()
     .filter(t => t.meta.includes(acc.name))
@@ -2799,7 +2812,6 @@ function finalizeQA(accountIdx, newBalance) {
   const pendingOut = modalPendingExpenses.reduce((s, e) => s + e.amount, 0);
   const unaccounted = Math.max(0, Math.abs(newBalance - prev) - manualOut - pendingOut);
 
-  // commit pending manually-added expenses
   const nowTs = Date.now();
   modalPendingExpenses.forEach(e => {
     state.transactions.unshift({
@@ -2814,7 +2826,6 @@ function finalizeQA(accountIdx, newBalance) {
   });
   modalPendingExpenses = [];
 
-  // Register auto-deducted tx if checked and unaccounted > 0
   if (autoChk && autoChk.checked && unaccounted > 500) {
     state.transactions.unshift({
       id: uid(), emoji: '📊',
@@ -2827,7 +2838,10 @@ function finalizeQA(accountIdx, newBalance) {
       autoDeducted: true,
     });
   }
+}
 
+function finalizeQA(accountIdx, newBalance) {
+  commitAutoDeductExpenses(state.accounts[accountIdx], newBalance);
   closeAutoModal();
   applyQABalance(accountIdx, newBalance);
 }
@@ -2856,6 +2870,93 @@ function applyQABalance(accountIdx, newBalance) {
   renderTxList('allTxList');
 }
 
+// 차트 상세에서 계좌 하나만 바로 수정할 때 쓰는, weeklyStep 진행에 영향을 주지 않는 버전
+function applyChartAccountBalance(accountIdx, newBalance) {
+  const now = new Date().toISOString();
+  state.accounts[accountIdx].balance = newBalance;
+  state.accounts[accountIdx].prevBalance = newBalance;
+  state.accounts[accountIdx].lastCheckedAt = now;
+  state.accounts[accountIdx].lastCheckedBy = session.playerName;
+
+  if (session.householdId) {
+    dbUpdateAccountBalance(state.accounts[accountIdx]).catch(console.error);
+    dbSaveSnapshot().catch(console.error);
+  }
+
+  closeChartAccountEditModal();
+  renderWeekly();
+  renderAccounts();
+  renderTxList('allTxList');
+  renderChart();
+}
+
+function finalizeChartAccountEdit(accountIdx, newBalance) {
+  commitAutoDeductExpenses(state.accounts[accountIdx], newBalance);
+  closeAutoModal();
+  applyChartAccountBalance(accountIdx, newBalance);
+}
+
+function openChartAccountEdit(accountId) {
+  const acc = state.accounts.find(a => String(a.id) === String(accountId));
+  if (!acc) return;
+  _chartEditAccountId = acc.id;
+  renderChartAccountEditCard(acc);
+  document.getElementById('chartAccountEditModal').classList.add('open');
+}
+
+function closeChartAccountEditModal() {
+  document.getElementById('chartAccountEditModal').classList.remove('open');
+  _chartEditAccountId = null;
+}
+
+function renderChartAccountEditCard(acc) {
+  const cls = acc.owner === '새롬' ? 's' : 'k';
+  const color = cls === 'k' ? 'var(--accent2)' : 'var(--gold)';
+  document.getElementById('chartAccountEditCard').innerHTML = `
+    <div class="qa-q">Q. <span style="color:${color};font-family:'Black Han Sans',sans-serif;">${acc.bank} ${acc.name}</span>의 현재 잔액이 얼마예요?</div>
+    <div style="font-size: 0.85rem;color:var(--muted);margin-bottom:12px;">
+      📌 이전 기록: <strong style="color:${color}">${fmt(acc.prevBalance ?? acc.balance)}</strong>
+    </div>
+    <div class="qa-input-row">
+      <input class="qa-input" id="chartEditInput" type="text" inputmode="numeric" oninput="fmtAmtInput(this)" value="${fmtRaw(acc.prevBalance ?? acc.balance)}" />
+      <span class="qa-unit">원</span>
+      <button class="qa-confirm ${cls}" onclick="confirmChartAccountEdit()">확인</button>
+    </div>
+    <button onclick="confirmChartAccountEditUnchanged()" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'MaruMinya',sans-serif;font-size:0.88rem;cursor:pointer;">변동 없음 → 바로 확인</button>
+  `;
+  setTimeout(() => document.getElementById('chartEditInput')?.focus(), 80);
+}
+
+function confirmChartAccountEditUnchanged() {
+  const idx = state.accounts.findIndex(a => a.id === _chartEditAccountId);
+  if (idx < 0) return;
+  const acc = state.accounts[idx];
+  applyChartAccountBalance(idx, acc.prevBalance ?? acc.balance);
+}
+
+function confirmChartAccountEdit() {
+  const val = parseAmt('chartEditInput');
+  if (isNaN(val) || val < 0) return;
+  const idx = state.accounts.findIndex(a => a.id === _chartEditAccountId);
+  if (idx < 0) return;
+  const acc = state.accounts[idx];
+  const prev = acc.prevBalance ?? acc.balance;
+  const diff = val - prev;
+
+  if (diff < 0) {
+    const manualOut = weeklyManualExpenses()
+      .filter(t => t.meta.includes(acc.name))
+      .reduce((s, t) => s + Math.abs(t.amount), 0);
+    const unaccounted = Math.abs(diff) - manualOut;
+    if (unaccounted > 500) {
+      closeChartAccountEditModal();
+      showAutoDeductModal(acc, Math.abs(diff), manualOut, idx, val, true);
+      return;
+    }
+  }
+
+  applyChartAccountBalance(idx, val);
+}
 
 // ===== COIN BURST =====
 const coinCanvas = document.getElementById('coinCanvas');
