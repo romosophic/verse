@@ -851,10 +851,7 @@
       <div id="wealthChartEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--muted);font-size:0.88rem;">아직 기록된 위클리 데이터가 없어요</div>
       <div id="wealthPieCard" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);">
         <div id="wealthPieTitle" style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;"></div>
-        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-          <div style="width:96px;height:96px;flex-shrink:0;"><canvas id="wealthPieChart"></canvas></div>
-          <div id="wealthPieLegend" style="flex:1;min-width:170px;font-size:0.82rem;color:var(--text);"></div>
-        </div>
+        <div id="wealthPieLegend" style="width:100%;font-size:0.82rem;color:var(--text);"></div>
       </div>
     </div>
 
@@ -1882,7 +1879,6 @@ function buildAvailabilityProjection() {
 
 // ===== CHART (주간 자산 추이 · 경우/새롬 누적 막대) =====
 let chartInstance = null;
-let pieChartInstance = null;
 let _chartPoints = [];
 let _pieActiveIdx = null;
 let _pieExpanded = new Set();
@@ -1988,25 +1984,6 @@ function showWealthPie(idx) {
       ${pieOwnerRow(pt, '새롬', s.s, s.kind, 's')}
     </div>
   `).join('') + `<div style="display:flex;justify-content:space-between;margin-top:2px;padding-top:6px;border-top:1px solid var(--border);font-weight:bold;"><span>합계</span><span>${fmtEok(total)}원</span></div>`;
-
-  const pieCanvas = document.getElementById('wealthPieChart');
-  if (pieChartInstance) pieChartInstance.destroy();
-  pieChartInstance = new Chart(pieCanvas.getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: slices.map(s => s.label),
-      datasets: [{ data: slices.map(s => s.value), backgroundColor: slices.map(s => s.color), borderWidth: 0 }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-        datalabels: { display: false }
-      }
-    }
-  });
 }
 function renderChart(period = '1M') {
   let data = state.wealthHistory;
